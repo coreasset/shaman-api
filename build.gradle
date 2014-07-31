@@ -35,6 +35,9 @@ dependencies {
     compile "org.springframework:spring-tx:${springVersion}"
     testCompile "org.springframework:spring-test:${springVersion}"
 
+    // spring hateos
+    compile 'org.springframework.hateoas:spring-hateoas:0.15.0.RELEASE'
+
     // slf4j
     def slf4jVersion = '1.7.7'
     compile "org.slf4j:slf4j-api:${slf4jVersion}"

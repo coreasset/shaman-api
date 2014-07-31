@@ -35,7 +35,7 @@ public class WebContextConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-        configurer.defaultContentType(MediaType.TEXT_HTML);
+        configurer.defaultContentType(MediaType.APPLICATION_JSON);
         configurer.favorParameter(false);
         configurer.favorPathExtension(false);
         configurer.ignoreAcceptHeader(false);
