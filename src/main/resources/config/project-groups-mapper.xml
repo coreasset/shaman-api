@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="itwise.coreasset.shaman.api.mapper.ProjectGroupMapper">
+
+	<sql id="select_table">
+		SELECT idx, name, desc, reg_date FROM project_groups
+	</sql>
+
+	<insert id="insert" parameterType="ProjectGroup" useGeneratedKeys="true" keyProperty="idx">
+		INSERT INTO 
+			project_groups (name, `desc`, reg_date)
+		VALUES
+			(#{name}, #{description}, now())
+
+	</insert>
+	
+
+	<delete id="delete" parameterType="ProjectGroup">
+		DELETE FROM project_groups
+		WHERE 
+			idx = #{idx} or name = #{name}
+	</delete>
+	
+	<!-- 
+	<update id="update" parameterType="ProjectGroup">
+		UPDATE project_groups 
+		<set>
+			<if test="name != null">name = #{name},</if>
+			<if test="desc != null">`desc` = #{desc},</if>
+		</set>
+		WHERE 
+			idx = #{idx} or name = #{name}
+	</update>
+
+	<select id="getList" resultMap="ProjectGroup">
+		<include refid="select_table" />
+		ORDER BY
+			reg_date DESC
+	</select>
+	 -->
+	
+	<!-- 
+	<select id="getProjectGroup" resultType="ProjectGroup">
+	-->
+	<resultMap id="ProjectGroup" type="ProjectGroup">
+		<id property="idx" column="idx" />
+		<result property="name" column="name"/>
+		<result property="description" column="desc"/>
+		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
+		<!-- 
+		<collection property="projects" javaType="java.util.ArrayList" resultMap="Project"/>
+		-->
+	</resultMap>
+	
+	<!-- 
+	<resultMap id="ProjectGroupList" extends="ProjectGroup" type="ProjectGroup">
+		<association property="bbsInfoBean" column="{bbsId=S_BBS_ID}" select="kr.xboard.dao.bbsinfo.BbsInfoDao.getBbsInfoItem"/>
+		<collection property="bbsFileBeans" ofType="BbsFileBean" column="{bbsId=S_BBS_ID,bbsIdx=I_BBS_IDX}" select="kr.xboard.dao.bbsfile.BbsFileDao.getBbsFileList"/>
+		<collection property="bbsCommentBeans" ofType="BbsCommentBean" column="{bbsId=S_BBS_ID,bbsIdx=I_BBS_IDX}" select="kr.xboard.dao.bbscomment.BbsCommentDao.getBbsCommentList"/>
+	</resultMap>
+	-->
+	
+	<select id="findOne" parameterType="ProjectGroup" resultMap="ProjectGroup">
+		SELECT idx, name, `desc` , reg_date FROM project_groups
+		WHERE
+			idx = #{idx} or name = #{name}
+	</select>
+
+	<select id="findList" resultMap="ProjectGroup">
+		SELECT idx, name, `desc` , reg_date FROM project_groups
+		Order by idx desc
+	</select>
+</mapper>
