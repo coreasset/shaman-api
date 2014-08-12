@@ -102,4 +102,8 @@ dependencies {
     //필수 요소 2014.08.11 by gwkoo
     def hibernateValidatorVersion = '5.1.2.Final'
     compile "org.hibernate:hibernate-validator:${hibernateValidatorVersion}"
+
+    def elVersion = '2.2.4'
+    compile "org.glassfish.web:javax.el:${elVersion}"
+    
 }
