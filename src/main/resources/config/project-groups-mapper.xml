@@ -21,20 +21,20 @@
 	<delete id="delete" parameterType="ProjectGroup">
 		DELETE FROM project_groups
 		WHERE 
-			idx = #{idx} or name = #{name}
+			idx = #{idx}
 	</delete>
 	
-	<!-- 
-	<update id="update" parameterType="ProjectGroup">
+	<update id="update" parameterType="map">
 		UPDATE project_groups 
 		<set>
-			<if test="name != null">name = #{name},</if>
-			<if test="desc != null">`desc` = #{desc},</if>
+			<if test="projectGroup.name != null">name = #{projectGroup.name},</if>
+			<if test="projectGroup.description != null">`desc` = #{projectGroup.description},</if>
 		</set>
 		WHERE 
-			idx = #{idx} or name = #{name}
+			idx = #{idx}
 	</update>
 
+	<!-- 
 	<select id="getList" resultMap="ProjectGroup">
 		<include refid="select_table" />
 		ORDER BY
@@ -62,6 +62,14 @@
 		<collection property="bbsCommentBeans" ofType="BbsCommentBean" column="{bbsId=S_BBS_ID,bbsIdx=I_BBS_IDX}" select="kr.xboard.dao.bbscomment.BbsCommentDao.getBbsCommentList"/>
 	</resultMap>
 	-->
+
+
+	<select id="isExists" resultType="int">
+		SELECT count(idx) as cnt FROM project_groups
+		WHERE
+			idx = #{idx}
+	</select>
+
 	
 	<select id="findOne" parameterType="ProjectGroup" resultMap="ProjectGroup">
 		SELECT idx, name, `desc` , reg_date FROM project_groups

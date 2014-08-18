@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * Created by gwkoo on 2014. 7. 29..
+ * Created by gwkoo on 2014. 7. 29
+ * ProjectGroup DTO
  */
 public class ProjectGroup implements Serializable {
 
@@ -13,28 +14,31 @@ public class ProjectGroup implements Serializable {
 	 */
 	private static final long serialVersionUID = 593181629181614333L;
 	private Integer idx = 0;
-    private String name;
-    private String description;
-    private Date regDate;
+	
+	private String name;
+	
+	private String description;
+	
+	private Date regDate;
 
-    public ProjectGroup() {
-    }
+	public ProjectGroup() {
+	}
 
-    public ProjectGroup(String name) {
-        this.name = name;
-    }
-    
-    public ProjectGroup(Integer idx) {
-    	this.idx = idx;
-    }
+	public ProjectGroup(String name) {
+		this.name = name;
+	}
+	
+	public ProjectGroup(Integer idx) {
+		this.idx = idx;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
 	public String getDescription() {
 		return description;

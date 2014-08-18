@@ -1,9 +1,10 @@
 package itwise.coreasset.shaman.api.mapper;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import itwise.coreasset.shaman.api.model.ProjectGroup;
+
+import java.util.ArrayList;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @author kkuru
@@ -12,9 +13,12 @@ import itwise.coreasset.shaman.api.model.ProjectGroup;
 public interface ProjectGroupMapper {
 	public void insert(ProjectGroup projectGroup);
 	
-	public void update(ProjectGroup projectGroup);
+	public void update(@Param("idx") int idx, @Param("projectGroup") ProjectGroup projectGroup);
 	
-	public void delete(ProjectGroup projectGroup);
+	public void delete(@Param("idx") int idx);
+
+//	public int count(@Param("idx") int idx);
+	public int isExists(@Param("idx") int idx);
 
 	public ProjectGroup findOne(ProjectGroup projectGroup);
 	
