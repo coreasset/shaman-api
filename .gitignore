@@ -48,6 +48,11 @@ com_crashlytics_export_strings.xml
 .classpath
 .project
 
+
 ### rebel setting ###
 # 2014.08.06 by Dennis
 rebel.xml
+
+### ignore Eclipse .springBeans ###
+# 2014.08.19 by Dennis
+.springBeans
