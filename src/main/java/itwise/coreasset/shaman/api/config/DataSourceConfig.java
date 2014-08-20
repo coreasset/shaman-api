@@ -23,7 +23,7 @@ public class DataSourceConfig implements InitializingBean {
 	
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
-	@Autowired 
+	@Autowired
 	private Environment env;
 
 	@Bean
@@ -34,6 +34,11 @@ public class DataSourceConfig implements InitializingBean {
 		dataSource.setUrl(env.getRequiredProperty("jdbc.url"));
 		dataSource.setUsername(env.getRequiredProperty("jdbc.username"));
 		dataSource.setPassword(env.getRequiredProperty("jdbc.password"));
+		
+//		set validation query
+		dataSource.setValidationQuery("select 1");
+		dataSource.setTestWhileIdle(true);
+		dataSource.setTimeBetweenEvictionRunsMillis(600000);
 		
 		return dataSource;
 	}
