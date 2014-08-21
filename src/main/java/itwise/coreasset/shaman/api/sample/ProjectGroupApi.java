@@ -1,6 +1,7 @@
 package itwise.coreasset.shaman.api.sample;
 
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
+import itwise.coreasset.shaman.api.model.ObjectList;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -82,7 +84,7 @@ public class ProjectGroupApi {
 	 */
 	@RequestMapping(value = "/{idx}", method = RequestMethod.PUT)
 	public ResponseEntity<ProjectGroup> update(@PathVariable int idx, @RequestBody ProjectGroup projectGroup) throws Exception {
-		if (projectGroupMapper.isExists(idx) == 1 ){
+		if (projectGroupMapper.isExist(idx) == 1 ){
 			projectGroupMapper.update(idx, projectGroup);
 			return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 		} else {
@@ -98,10 +100,10 @@ public class ProjectGroupApi {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/{idx}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/{idx:[\\d]+}", method = RequestMethod.DELETE)
 	public ResponseEntity<ProjectGroup> delete(@PathVariable int idx) throws Exception {
 		
-		if (projectGroupMapper.isExists(idx) == 1 ){
+		if (projectGroupMapper.isExist(idx) == 1 ){
 			projectGroupMapper.delete(idx);
 			return new ResponseEntity<ProjectGroup>(new ProjectGroup(), HttpStatus.OK);
 		} else {
@@ -117,9 +119,7 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{name}", method = RequestMethod.GET)
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable String name) {
 		
-		ProjectGroup projectGroup = new ProjectGroup(name);
-
-		projectGroup = projectGroupMapper.findOne(projectGroup);
+		ProjectGroup projectGroup = projectGroupMapper.findOne(name);
 		
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 	}
@@ -130,11 +130,10 @@ public class ProjectGroupApi {
 	 * @param msg
 	 * @return
 	 */
-	@RequestMapping(value = "/{idx}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{idx:[\\d]+}", method = RequestMethod.GET)
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) {
 		
-		ProjectGroup projectGroup = new ProjectGroup(idx);
-		projectGroup = projectGroupMapper.findOne(projectGroup);
+		ProjectGroup projectGroup = projectGroupMapper.findOne(idx);
 		
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 	}
@@ -145,10 +144,28 @@ public class ProjectGroupApi {
 	 * @param list
 	 * @return
 	 */
-	@RequestMapping(value = "/?search={name}", method = RequestMethod.GET)
-	public ResponseEntity<ArrayList<ProjectGroup>> findList() {
-		ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList();
-		return new ResponseEntity<ArrayList<ProjectGroup>>(projectGroups, HttpStatus.OK);
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	public ResponseEntity<ObjectList> findList(
+			  @RequestParam(value = "page", required = false, defaultValue = "1") int page
+			, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
+			, @RequestParam(value = "keyword", required = false) String keyword
+			, @RequestParam(value = "sort", required = false) String sort
+		) {
+		
+		if(page < 1) {
+			page = 1;
+		}
+		
+		int offset = (page - 1) * limit;
+		
+		ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList(offset, limit, keyword);
+		ObjectList<ProjectGroup> response = new ObjectList<ProjectGroup>();
+		
+		response.setList(projectGroups);
+		response.setTotalCount(projectGroupMapper.count());
+		//TODO: datatables에서 필요로 함, 나중에 구현
+		response.setFilterCount(projectGroupMapper.count());
+		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "", method = RequestMethod.POST)
