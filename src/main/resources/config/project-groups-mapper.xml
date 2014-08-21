@@ -6,12 +6,12 @@
 <mapper namespace="itwise.coreasset.shaman.api.mapper.ProjectGroupMapper">
 
 	<sql id="select_table">
-		SELECT idx, name, desc, reg_date FROM project_groups
+		SELECT idx, name, description, reg_date FROM project_groups
 	</sql>
 
 	<insert id="insert" parameterType="ProjectGroup" useGeneratedKeys="true" keyProperty="idx">
 		INSERT INTO 
-			project_groups (name, `desc`, reg_date)
+			project_groups (name, description, reg_date)
 		VALUES
 			(#{name}, #{description}, now())
 
@@ -28,7 +28,7 @@
 		UPDATE project_groups 
 		<set>
 			<if test="projectGroup.name != null">name = #{projectGroup.name},</if>
-			<if test="projectGroup.description != null">`desc` = #{projectGroup.description},</if>
+			<if test="projectGroup.description != null">description = #{projectGroup.description},</if>
 		</set>
 		WHERE 
 			idx = #{idx}
@@ -48,7 +48,7 @@
 	<resultMap id="ProjectGroup" type="ProjectGroup">
 		<id property="idx" column="idx" />
 		<result property="name" column="name"/>
-		<result property="description" column="desc"/>
+		<result property="description" column="description"/>
 		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
 		<!-- 
 		<collection property="projects" javaType="java.util.ArrayList" resultMap="Project"/>
@@ -64,21 +64,61 @@
 	-->
 
 
-	<select id="isExists" resultType="int">
+<!-- 
+	<select id="isExist" parameterType="map" resultType="int">
 		SELECT count(idx) as cnt FROM project_groups
 		WHERE
-			idx = #{idx}
+			0 = 0
+			<if test="map.idx != null"> and idx = #{map.idx}</if>
+			<if test="map.keyword != null"> and name = #{map.keyword}</if>
 	</select>
-
-	
-	<select id="findOne" parameterType="ProjectGroup" resultMap="ProjectGroup">
-		SELECT idx, name, `desc` , reg_date FROM project_groups
+-->
+	<select id="isExist" resultType="int" >
+		SELECT count(idx) as cnt FROM project_groups
 		WHERE
-			idx = #{idx} or name = #{name}
+			0 = 0
+			<if test="_parameter.containsKey('idx')">
+				<if test="idx != null"> and idx = #{idx}</if>
+			</if>
+			<if test="_parameter.containsKey('keyword')">
+				<if test="keyword != null"> and name = #{keyword}</if>
+			</if>
+	</select>
+	
+	<select id="count" parameterType="String" resultType="int">
+		SELECT count(idx) as cnt FROM project_groups
+		<if test="keyword != null">
+		WHERE
+			name like '%${keyword}%'
+			or description like '%${keyword}%'
+		</if>
+	</select>
+	
+	<select id="findOne" resultMap="ProjectGroup">
+		SELECT idx, name, description , reg_date FROM project_groups
+		WHERE
+			0 = 0
+			<if test="_parameter.containsKey('idx')">
+				<if test="idx != null"> and idx = #{idx}</if>
+			</if>
+			<if test="_parameter.containsKey('name')">
+				<if test="name!= null"> and name = #{name}</if>
+			</if>
 	</select>
 
-	<select id="findList" resultMap="ProjectGroup">
-		SELECT idx, name, `desc` , reg_date FROM project_groups
-		Order by idx desc
+	<select id="findList" parameterType="map" resultMap="ProjectGroup">
+		SELECT idx, name, description , reg_date 
+		FROM project_groups
+		<if test="_parameter.containsKey('keyword')">
+			<if test="keyword != null">
+			where
+				name like '%${keyword}%'
+				or description like '%${keyword}%'
+			</if>
+		</if>
+		order by 
+			idx desc
+		limit 
+			#{page}, #{limit}
 	</select>
 </mapper>

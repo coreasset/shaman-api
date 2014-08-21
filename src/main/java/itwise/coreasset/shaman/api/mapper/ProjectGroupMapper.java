@@ -17,10 +17,17 @@ public interface ProjectGroupMapper {
 	
 	public void delete(@Param("idx") int idx);
 
-//	public int count(@Param("idx") int idx);
-	public int isExists(@Param("idx") int idx);
+	public int isExist(@Param("idx") int idx);
+	public int isExist(@Param("keyword") String keyword);
 
-	public ProjectGroup findOne(ProjectGroup projectGroup);
+	public int count();
+	public int count(@Param("idx") int idx);
+	public int count(@Param("keyword") String keyword);
+
+	public ProjectGroup findOne(@Param("idx") int idx);
+	public ProjectGroup findOne(@Param("name") String name);
 	
-	public ArrayList<ProjectGroup> findList();
+	public ArrayList<ProjectGroup> findList(@Param("page") int page, @Param("limit") int limit);
+	public ArrayList<ProjectGroup> findList(@Param("page") int page, @Param("limit") int limit, @Param("keyword") String keyword);
+
 }
