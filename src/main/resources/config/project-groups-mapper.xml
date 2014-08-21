@@ -119,6 +119,6 @@
 		order by 
 			idx desc
 		limit 
-			#{page}, #{limit}
+			#{offset}, #{limit}
 	</select>
 </mapper>

@@ -27,7 +27,7 @@ public interface ProjectGroupMapper {
 	public ProjectGroup findOne(@Param("idx") int idx);
 	public ProjectGroup findOne(@Param("name") String name);
 	
-	public ArrayList<ProjectGroup> findList(@Param("page") int page, @Param("limit") int limit);
-	public ArrayList<ProjectGroup> findList(@Param("page") int page, @Param("limit") int limit, @Param("keyword") String keyword);
+	public ArrayList<ProjectGroup> findList(@Param("offset") int offset, @Param("limit") int limit);
+	public ArrayList<ProjectGroup> findList(@Param("offset") int offset, @Param("limit") int limit, @Param("keyword") String keyword);
 
 }
