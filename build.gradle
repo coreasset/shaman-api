@@ -37,7 +37,7 @@ dependencies {
     compile "org.springframework:spring-jdbc:${springVersion}"
     testCompile "org.springframework:spring-test:${springVersion}"
 
-    // spring hateos
+    // spring hateoas
     compile 'org.springframework.hateoas:spring-hateoas:0.15.0.RELEASE'
 
     // slf4j
