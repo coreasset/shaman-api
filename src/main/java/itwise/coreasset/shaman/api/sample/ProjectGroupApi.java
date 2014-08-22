@@ -14,7 +14,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -69,9 +67,10 @@ public class ProjectGroupApi {
 	 * @param msg
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.POST, headers = {"Content-type=application/json"})
-	public HttpEntity<ProjectGroup> create(@RequestBody ProjectGroup projectGroup) {
+	@RequestMapping(value = "", method = RequestMethod.POST)
+	public ResponseEntity<ProjectGroup> create(@RequestBody ProjectGroup projectGroup) {
 		projectGroupMapper.insert(projectGroup);
+		projectGroup = projectGroupMapper.findOne(projectGroup.getIdx());
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.CREATED);
 	}
 	
@@ -82,7 +81,7 @@ public class ProjectGroupApi {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/{idx}", method = RequestMethod.PUT)
+	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.PUT, headers = {"Content-type=application/json"})
 	public ResponseEntity<ProjectGroup> update(@PathVariable int idx, @RequestBody ProjectGroup projectGroup) throws Exception {
 		if (projectGroupMapper.isExist(idx) == 1 ){
 			projectGroupMapper.update(idx, projectGroup);
@@ -100,7 +99,7 @@ public class ProjectGroupApi {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/{idx:[\\d]+}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.DELETE)
 	public ResponseEntity<ProjectGroup> delete(@PathVariable int idx) throws Exception {
 		
 		if (projectGroupMapper.isExist(idx) == 1 ){
@@ -111,12 +110,29 @@ public class ProjectGroupApi {
 		}
 		
 	}
-	
+
+
 	/**
-	 * @param msg
+	 * Get Only One, ProjectGroup by int
+	 * 
+	 * @param int idx
 	 * @return
 	 */
-	@RequestMapping(value = "/{name}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.GET)
+	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) {
+		
+		ProjectGroup projectGroup = projectGroupMapper.findOne(idx);
+		
+		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
+	}
+	
+	/**
+	 * Get Only One, ProjectGroup by String
+	 * 
+	 * @param String name
+	 * @return
+	 */
+	@RequestMapping(value = "/{name:^.*[^\\d].*$}", method = RequestMethod.GET)
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable String name) {
 		
 		ProjectGroup projectGroup = projectGroupMapper.findOne(name);
@@ -124,19 +140,6 @@ public class ProjectGroupApi {
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 	}
 
-	/**
-	 * Get Only One, ProjectGroup
-	 * 
-	 * @param msg
-	 * @return
-	 */
-	@RequestMapping(value = "/{idx:[\\d]+}", method = RequestMethod.GET)
-	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) {
-		
-		ProjectGroup projectGroup = projectGroupMapper.findOne(idx);
-		
-		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
-	}
 
 	/**
 	 * Get List
@@ -168,12 +171,12 @@ public class ProjectGroupApi {
 		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "", method = RequestMethod.POST)
-	@ResponseBody
-	public void example() throws Exception{
-		System.out.println("in the example function");
-		throw new Exception("a new Exception");
-	}
+//	@RequestMapping(value = "", method = RequestMethod.POST)
+//	@ResponseBody
+//	public void example() throws Exception{
+//		System.out.println("in the example function");
+//		throw new Exception("a new Exception");
+//	}
 
 	
 	/**
