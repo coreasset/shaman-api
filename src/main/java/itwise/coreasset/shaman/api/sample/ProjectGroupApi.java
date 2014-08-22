@@ -83,7 +83,7 @@ public class ProjectGroupApi {
 	 */
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.PUT, headers = {"Content-type=application/json"})
 	public ResponseEntity<ProjectGroup> update(@PathVariable int idx, @RequestBody ProjectGroup projectGroup) throws Exception {
-		if (projectGroupMapper.isExist(idx) == 1 ){
+		if (projectGroupMapper.isExist(idx) > 0 ){
 			projectGroupMapper.update(idx, projectGroup);
 			return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 		} else {
@@ -93,7 +93,7 @@ public class ProjectGroupApi {
 
 
 	/**
-	 * Delete ProjectGroup
+	 * Delete ProjectGroup by idx
 	 * 
 	 * @param msg
 	 * @return
@@ -102,7 +102,7 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.DELETE)
 	public ResponseEntity<ProjectGroup> delete(@PathVariable int idx) throws Exception {
 		
-		if (projectGroupMapper.isExist(idx) == 1 ){
+		if (projectGroupMapper.isExist(idx) > 0 ){
 			projectGroupMapper.delete(idx);
 			return new ResponseEntity<ProjectGroup>(new ProjectGroup(), HttpStatus.OK);
 		} else {
@@ -110,6 +110,27 @@ public class ProjectGroupApi {
 		}
 		
 	}
+
+	/**
+	 * Delete ProjectGroup by name
+	 * 
+	 * @param msg
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/{name:^.*[^\\d].*$}", method = RequestMethod.DELETE)
+	public ResponseEntity<ProjectGroup> delete(@PathVariable String name) throws Exception {
+		
+		int idx = projectGroupMapper.isExist(name);
+		if (idx > 0){
+			projectGroupMapper.delete(idx);
+			return new ResponseEntity<ProjectGroup>(new ProjectGroup(), HttpStatus.OK);
+		} else {
+			throw new RuntimeException("Delete Fail, cannot find ProjectGroup");
+		}
+		
+	}
+
 
 
 	/**

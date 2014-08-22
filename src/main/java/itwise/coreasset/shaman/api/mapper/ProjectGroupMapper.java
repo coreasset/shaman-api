@@ -16,7 +16,8 @@ public interface ProjectGroupMapper {
 	public void update(@Param("idx") int idx, @Param("projectGroup") ProjectGroup projectGroup);
 	
 	public void delete(@Param("idx") int idx);
-
+//	public void delete(@Param("name") String name);
+	
 	public int isExist(@Param("idx") int idx);
 	public int isExist(@Param("keyword") String keyword);
 

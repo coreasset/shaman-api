@@ -74,15 +74,17 @@
 	</select>
 -->
 	<select id="isExist" resultType="int" >
-		SELECT count(idx) as cnt FROM project_groups
-		WHERE
-			0 = 0
-			<if test="_parameter.containsKey('idx')">
-				<if test="idx != null"> and idx = #{idx}</if>
-			</if>
-			<if test="_parameter.containsKey('keyword')">
-				<if test="keyword != null"> and name = #{keyword}</if>
-			</if>
+		select result from (
+			SELECT IFNULL(idx,0) as result, count(idx) as cnt FROM project_groups
+			WHERE
+				0 = 0
+				<if test="_parameter.containsKey('idx')">
+					<if test="idx != null"> and idx = #{idx}</if>
+				</if>
+				<if test="_parameter.containsKey('keyword')">
+					<if test="keyword != null"> and name = #{keyword}</if>
+				</if>
+		) as a
 	</select>
 	
 	<select id="count" parameterType="String" resultType="int">
