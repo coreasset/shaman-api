@@ -1,6 +1,7 @@
 package itwise.coreasset.test;
 
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import itwise.coreasset.shaman.api.config.DataSourceConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
@@ -76,11 +77,11 @@ public class ProjectGroupMapperTest {
 	 */
 	@Test
 	public void testProjectGroupCount() throws Exception {
-		int count, allCount;
+		int idx, allCount;
 		
 		// idx field search number
-		count = projectGroupMapper.isExist(-1);
-		assertEquals("is 0", count, 0);
+		idx = projectGroupMapper.isExist(-1);
+		assertEquals("is 0", idx, 0);
 		
 		//All Count
 		allCount = projectGroupMapper.count();
@@ -92,25 +93,26 @@ public class ProjectGroupMapperTest {
 		projectGroupMapper.insert(projectGroup);
 
 		// name match
-		count = projectGroupMapper.isExist(projectGroup.getName());
-		assertEquals("is 1", count, 1);
+		idx= projectGroupMapper.isExist(projectGroup.getName());
+		assertThat("is 1", idx, greaterThan(0));
+		
 		
 		// idx match
-		count = projectGroupMapper.isExist(projectGroup.getIdx());
-		assertEquals("is 1", count, 1);
+		idx = projectGroupMapper.isExist(projectGroup.getIdx());
+		assertThat("is 1", idx,  greaterThan(0));
 		
 		
 		// name field search result is no match
-		count = projectGroupMapper.isExist("count test");
-		assertEquals("is 0", count, 0);
+		idx = projectGroupMapper.isExist("count test");
+		assertEquals("is 0", idx, 0);
 
 		// one more insert
 		projectGroup.setName("count test 2");
 		projectGroupMapper.insert(projectGroup);
 		
 		//like match
-		count = projectGroupMapper.count("count test");
-		assertEquals("like query result is 2", count, 2);
+		idx = projectGroupMapper.count("count test");
+		assertEquals("like query result is 2", idx, 2);
 		assertEquals("all count + 2", projectGroupMapper.count(), allCount + 2);
 	}
 	
