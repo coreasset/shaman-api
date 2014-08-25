@@ -1,5 +1,6 @@
 package itwise.coreasset.shaman.api.sample;
 
+import itwise.coreasset.shaman.api.exception.ResourceNotFoundException;
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
 import itwise.coreasset.shaman.api.model.ObjectList;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
@@ -85,9 +86,9 @@ public class ProjectGroupApi {
 	public ResponseEntity<ProjectGroup> update(@PathVariable int idx, @RequestBody ProjectGroup projectGroup) throws Exception {
 		if (projectGroupMapper.isExist(idx) > 0 ){
 			projectGroupMapper.update(idx, projectGroup);
-			return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
+			return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.CREATED);
 		} else {
-			throw new RuntimeException("Update Fail, cannot find ProjectGroup");
+			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
 		}
 	}
 
@@ -104,9 +105,9 @@ public class ProjectGroupApi {
 		
 		if (projectGroupMapper.isExist(idx) > 0 ){
 			projectGroupMapper.delete(idx);
-			return new ResponseEntity<ProjectGroup>(new ProjectGroup(), HttpStatus.OK);
+			return new ResponseEntity<ProjectGroup>(HttpStatus.ACCEPTED);
 		} else {
-			throw new RuntimeException("Delete Fail, cannot find ProjectGroup");
+			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
 		}
 		
 	}
@@ -124,9 +125,9 @@ public class ProjectGroupApi {
 		int idx = projectGroupMapper.isExist(name);
 		if (idx > 0){
 			projectGroupMapper.delete(idx);
-			return new ResponseEntity<ProjectGroup>(new ProjectGroup(), HttpStatus.OK);
+			return new ResponseEntity<ProjectGroup>(HttpStatus.ACCEPTED);
 		} else {
-			throw new RuntimeException("Delete Fail, cannot find ProjectGroup");
+			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
 		}
 		
 	}
@@ -138,11 +139,16 @@ public class ProjectGroupApi {
 	 * 
 	 * @param int idx
 	 * @return
+	 * @throws ResourceNotFoundException
 	 */
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.GET)
-	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) {
+	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) throws ResourceNotFoundException {
 		
 		ProjectGroup projectGroup = projectGroupMapper.findOne(idx);
+		
+		if (projectGroup == null){
+			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
+		}
 		
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 	}
@@ -157,6 +163,10 @@ public class ProjectGroupApi {
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable String name) {
 		
 		ProjectGroup projectGroup = projectGroupMapper.findOne(name);
+
+		if (projectGroup == null){
+			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
+		}
 		
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.OK);
 	}
@@ -176,9 +186,11 @@ public class ProjectGroupApi {
 			, @RequestParam(value = "sort", required = false) String sort
 		) {
 		
-		if(page < 1) {
-			page = 1;
-		}
+		int count = projectGroupMapper.count();
+		int lastPage = (int)Math.ceil(count / limit) + 1;
+		
+		if(page < 1) page = 1;
+		else if(page > lastPage) page = lastPage;
 		
 		int offset = (page - 1) * limit;
 		
@@ -186,19 +198,11 @@ public class ProjectGroupApi {
 		ObjectList<ProjectGroup> response = new ObjectList<ProjectGroup>();
 		
 		response.setList(projectGroups);
-		response.setTotalCount(projectGroupMapper.count());
+		response.setTotalCount(count);
 		//TODO: datatables에서 필요로 함, 나중에 구현
 		response.setFilterCount(projectGroupMapper.count());
 		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
-	
-//	@RequestMapping(value = "", method = RequestMethod.POST)
-//	@ResponseBody
-//	public void example() throws Exception{
-//		System.out.println("in the example function");
-//		throw new Exception("a new Exception");
-//	}
-
 	
 	/**
 	 * TODO : 디테일한 예외 상황은 나중에 다시 정리

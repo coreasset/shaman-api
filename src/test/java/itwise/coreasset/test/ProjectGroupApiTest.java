@@ -143,7 +143,7 @@ public class ProjectGroupApiTest {
 				.content(requestMessage)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
+			.andExpect(status().isCreated())
 //			.andExpect(jsonPath("$.name", is("updateTest2")))
 			.andDo(print())
 			.andReturn();
@@ -165,7 +165,7 @@ public class ProjectGroupApiTest {
 				.content(requestMessage)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is4xxClientError())
+			.andExpect(status().isNoContent())
 			.andDo(print())
 			.andReturn();
 	}
@@ -189,7 +189,7 @@ public class ProjectGroupApiTest {
 		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getIdx())
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
+			.andExpect(status().isAccepted())
 //			.andDo(print())
 			.andReturn();
 	}
@@ -206,7 +206,7 @@ public class ProjectGroupApiTest {
 		this.mockMvc.perform(delete("/ProjectGroup/0")
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is4xxClientError())
+			.andExpect(status().isNoContent())
 			.andDo(print())
 			.andReturn();
 	}
