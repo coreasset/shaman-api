@@ -183,7 +183,8 @@ public class ProjectGroupApi {
 			  @RequestParam(value = "page", required = false, defaultValue = "1") int page
 			, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
 			, @RequestParam(value = "keyword", required = false) String keyword
-			, @RequestParam(value = "sort", required = false) String sort
+			, @RequestParam(value = "order_column", required = false, defaultValue = "idx") String order_column
+			, @RequestParam(value = "order_dir", required = false, defaultValue = "DESC") String order_dir
 		) {
 		
 		int count = projectGroupMapper.count();
@@ -194,13 +195,12 @@ public class ProjectGroupApi {
 		
 		int offset = (page - 1) * limit;
 		
-		ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList(offset, limit, keyword);
+		ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList(offset, limit, keyword, order_column, order_dir);
 		ObjectList<ProjectGroup> response = new ObjectList<ProjectGroup>();
 		
 		response.setList(projectGroups);
 		response.setTotalCount(count);
-		//TODO: datatables에서 필요로 함, 나중에 구현
-		response.setFilterCount(projectGroupMapper.count());
+		response.setFilterCount(keyword == null ? count : projectGroupMapper.count(keyword));
 		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
 	

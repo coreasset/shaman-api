@@ -119,7 +119,7 @@
 			</if>
 		</if>
 		order by 
-			idx desc
+			${order_column} ${order_dir}
 		limit 
 			#{offset}, #{limit}
 	</select>
