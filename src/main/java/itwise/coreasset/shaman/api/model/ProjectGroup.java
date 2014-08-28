@@ -3,6 +3,8 @@ package itwise.coreasset.shaman.api.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 /**
  * Created by gwkoo on 2014. 7. 29
  * ProjectGroup DTO
@@ -18,6 +20,7 @@ public class ProjectGroup implements Serializable {
 	private String name;
 	
 	private String description;
+	
 	
 	private Date regDate;
 
@@ -55,7 +58,8 @@ public class ProjectGroup implements Serializable {
 	public void setIdx(Integer idx) {
 		this.idx = idx;
 	}
-
+	
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
 	public Date getRegDate() {
 		return regDate;
 	}
