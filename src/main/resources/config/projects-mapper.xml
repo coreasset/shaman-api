@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="itwise.coreasset.shaman.api.mapper.ProjectMapper">
+
+	<sql id="select_table">
+		SELECT idx, name, description, reg_date FROM projects
+	</sql>
+
+	<insert id="insert" parameterType="Project" useGeneratedKeys="true" keyProperty="idx">
+		INSERT INTO 
+			projects (name, description, reg_date)
+		VALUES
+			(#{name}, #{description}, now())
+
+	</insert>
+	
+
+	<delete id="delete" parameterType="Project">
+		DELETE FROM projects
+		WHERE 
+			idx = #{idx}
+	</delete>
+	
+	<update id="update" parameterType="map">
+		UPDATE projects
+		<set>
+			<if test="project.name != null">name = #{project.name},</if>
+			<if test="project.description != null">description = #{project.description},</if>
+		</set>
+		WHERE 
+			idx = #{idx}
+	</update>
+
+	<resultMap id="Project" type="Project">
+		<id property="idx" column="idx" />
+		<result property="name" column="name"/>
+		<result property="group_id" column="group_id"/>
+		<result property="artifact_id" column="artifact_id"/>
+		<result property="package" column="package"/>
+		<result property="description" column="description"/>
+		<result property="build_profile_idx" column="build_profile_idx"/>
+		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
+	</resultMap>
+	
+	<select id="isExist" resultType="int" >
+		select result from (
+			SELECT IFNULL(idx,0) as result, count(idx) as cnt FROM projects
+			WHERE
+				0 = 0
+				<if test="_parameter.containsKey('idx')">
+					<if test="idx != null"> and idx = #{idx}</if>
+				</if>
+				<if test="_parameter.containsKey('keyword')">
+					<if test="keyword != null"> and name = #{keyword}</if>
+				</if>
+		) as a
+	</select>
+	
+	<select id="count" parameterType="String" resultType="int">
+		SELECT count(idx) as cnt FROM projects
+		<if test="keyword != null">
+		WHERE
+			name like '%${keyword}%'
+			or description like '%${keyword}%'
+		</if>
+	</select>
+	
+	<select id="findOne" resultMap="Project">
+		SELECT idx, name, description , reg_date FROM projects
+		WHERE
+			0 = 0
+			<if test="_parameter.containsKey('idx')">
+				<if test="idx != null"> and idx = #{idx}</if>
+			</if>
+			<if test="_parameter.containsKey('name')">
+				<if test="name!= null"> and name = #{name}</if>
+			</if>
+	</select>
+
+	<select id="findList" parameterType="map" resultMap="Project">
+		SELECT 
+			name, description, group_id, artifact_id, package, reg_date, build_profile_idx 
+		FROM projects
+		<if test="_parameter.containsKey('keyword')">
+			<if test="keyword != null">
+			where
+				name like '%${keyword}%'
+				or description like '%${keyword}%'
+			</if>
+		</if>
+		
+		order by 
+		<choose>
+			<when test="_parameter.containsKey('order_column') and _parameter.containsKey('order_order_dir')">
+				${order_column} ${order_dir}
+			</when>
+			<otherwise>
+				idx desc
+			</otherwise>
+		</choose>
+		
+		limit 
+			#{offset}, #{limit}
+	</select>
+</mapper>
