@@ -186,11 +186,21 @@ public class ProjectGroupApiTest {
 		String responseBody = response.getResponse().getContentAsString();
 		projectGroup = new ObjectMapper().readValue(responseBody, ProjectGroup.class);
 		
+		// delete by idx
 		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getIdx())
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isAccepted())
-//			.andDo(print())
+			.andDo(print())
+			.andReturn();
+		
+		response = requestCreate(projectGroup);
+		// delete by name
+		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getName())
+				.contentType(MediaType.APPLICATION_JSON)
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isAccepted())
+			.andDo(print())
 			.andReturn();
 	}
 	
