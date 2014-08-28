@@ -119,7 +119,16 @@
 			</if>
 		</if>
 		order by 
-			${order_column} ${order_dir}
+		
+		<choose>
+			<when test="_parameter.containsKey('order_column') and _parameter.containsKey('order_order_dir')">
+				${order_column} ${order_dir}
+			</when>
+			<otherwise>
+				idx desc
+			</otherwise>
+		</choose>
+		
 		limit 
 			#{offset}, #{limit}
 	</select>
