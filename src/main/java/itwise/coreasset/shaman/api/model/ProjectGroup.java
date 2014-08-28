@@ -5,6 +5,8 @@ import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 /**
  * Created by gwkoo on 2014. 7. 29
  * ProjectGroup DTO
@@ -21,7 +23,7 @@ public class ProjectGroup implements Serializable {
 	
 	private String description;
 	
-	
+	@JsonFormat(pattern="yyyy-MM-dd hh:mm")
 	private Date regDate;
 
 	public ProjectGroup() {
