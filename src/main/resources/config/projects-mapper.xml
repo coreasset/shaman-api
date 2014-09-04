@@ -4,7 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="itwise.coreasset.shaman.api.mapper.ProjectMapper">
-
+	
 	<sql id="select_table">
 		SELECT idx, name, description, reg_date FROM projects
 	</sql>
@@ -14,7 +14,6 @@
 			projects (name, description, reg_date)
 		VALUES
 			(#{name}, #{description}, now())
-
 	</insert>
 	
 
@@ -34,16 +33,7 @@
 			idx = #{idx}
 	</update>
 
-	<resultMap id="Project" type="Project">
-		<id property="idx" column="idx" />
-		<result property="name" column="name"/>
-		<result property="groupId" column="group_id"/>
-		<result property="artifactId" column="artifact_id"/>
-		<result property="packageType" column="package_type"/>
-		<result property="description" column="description"/>
-		<result property="buildProfileIdx" column="build_profile_idx"/>
-		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
-	</resultMap>
+
 	
 	<select id="isExist" resultType="int" >
 		select result from (
@@ -67,41 +57,114 @@
 			or description like '%${keyword}%'
 		</if>
 	</select>
+
 	
-	<select id="findOne" resultMap="Project">
-		SELECT idx, name, description , reg_date FROM projects
+	<!-- 
+	<select id="findOne" resultMap="ProjectResultMap">
+		SELECT 
+			a.idx, a.name, a.description , a.reg_date 
+			,b.change_log
+		FROM projects as a
+		left outer join project_changelog as b on a.idx = b.prj_idx
 		WHERE
 			0 = 0
 			<if test="_parameter.containsKey('idx')">
-				<if test="idx != null"> and idx = #{idx}</if>
+				<if test="idx != null"> and a.idx = #{idx}</if>
 			</if>
 			<if test="_parameter.containsKey('name')">
-				<if test="name!= null"> and name = #{name}</if>
+				<if test="name!= null"> and a.name = #{name}</if>
 			</if>
 	</select>
+	
+	 -->
+	 
+	<resultMap id="ProjectResultMap" type="Project">
+		<id property="idx" column="idx" />
+		<result property="name" column="name"/>
+		<result property="groupId" column="group_id"/>
+		<result property="artifactId" column="artifact_id"/>
+		<result property="packageType" column="package_type"/>
+		<result property="description" column="description"/>
+		<result property="buildProfileIdx" column="build_profile_idx"/>
+		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
+		<!-- 
+		<collection property="changeLogs" column="idx" javaType="ArrayList" ofType="ProjectChangeLog" select="itwise.coreasset.shaman.api.mapper.ProjectChangeLogMapper.findList">
+		</collection>
+		 -->
+		<collection property="groups" column="idx" javaType="ArrayList" ofType="ProjectGroup" select="hasGroups" />
+		 
+	</resultMap>
 
-	<select id="findList" parameterType="map" resultMap="Project">
+
+	<select id="selectChangeLogs" resultType="Project">
 		SELECT 
-			idx, name, reg_date, description, group_id, artifact_id, package_type, build_profile_idx 
-		FROM projects
+			idx, change_log, reg_date 
+		FROM project_changelog
+		where
+			prj_idx = #{idx}
+	</select>
+
+
+	<insert id="addHasGroup" parameterType="map">
+		insert into groups_has_projects
+		(prj_idx, grp_idx)
+		values (#{prj_idx}, #{grp_idx})
+	</insert>
+
+	<delete id="delHasGroup" parameterType="map">
+		delete from groups_has_projects
+		where
+			prj_idx = #{prj_idx}
+			and grp_idx = #{grp_idx}
+	</delete>
+	
+	<select id="hasGroups" resultType="Project">
+		SELECT 
+			idx, name 
+		FROM project_groups as a
+		inner join groups_has_projects as b on a.idx = b.grp_idx
+		where
+			b.prj_idx = #{idx}
+	</select>
+	
+	<select id="findOne" resultMap="ProjectResultMap">
+		SELECT 
+			a.idx, name, a.reg_date, a.description, a.group_id, a.artifact_id, a.package_type, a.build_profile_idx 
+		FROM projects as a
+		WHERE
+			0 = 0
+			<if test="_parameter.containsKey('idx')">
+				<if test="idx != null"> and a.idx = #{idx}</if>
+			</if>
+			<if test="_parameter.containsKey('name')">
+				<if test="name!= null"> and a.name = #{name}</if>
+			</if>
+	</select>
+	
+	<select id="findList" parameterType="map" resultMap="ProjectResultMap">
+		SELECT 
+			a.idx, name, a.reg_date, a.description, a.group_id, a.artifact_id, a.package_type, a.build_profile_idx
+			,count(b.grp_idx) as grp_count 
+		FROM projects as a
+		left outer join groups_has_projects as b on a.idx = b.prj_idx
 		<if test="_parameter.containsKey('keyword')">
 			<if test="keyword != null">
 			where
-				name like '%${keyword}%'
-				or description like '%${keyword}%'
+				a.name like '%${keyword}%'
+				or a.description like '%${keyword}%'
 			</if>
 		</if>
 		
+		group by a.idx
 		order by 
 		<choose>
 			<when test="_parameter.containsKey('order_column') and _parameter.containsKey('order_dir')">
 				${order_column} ${order_dir}
 			</when>
 			<otherwise>
-				idx desc
+				a.idx desc
 			</otherwise>
 		</choose>
-		
 		limit 
 			#{offset}, #{limit}
 	</select>

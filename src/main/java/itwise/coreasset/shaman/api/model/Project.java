@@ -1,6 +1,7 @@
 package itwise.coreasset.shaman.api.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -25,7 +26,9 @@ public class Project implements Serializable {
 	private String packageType;
 	@JsonFormat(pattern="yyyy-MM-dd hh:mm")
 	private Date regDate;
-
+	
+	private ArrayList<ProjectGroup> groups;
+	
 	public Project() {
 	}
 	
@@ -91,5 +94,19 @@ public class Project implements Serializable {
 
 	public void setRegDate(Date regDate) {
 		this.regDate = regDate;
+	}
+
+	/**
+	 * @return the groups
+	 */
+	public ArrayList<ProjectGroup> getGroups() {
+		return groups;
+	}
+
+	/**
+	 * @param groups the groups to set
+	 */
+	public void setGroups(ArrayList<ProjectGroup> groups) {
+		this.groups = groups;
 	}
 }
