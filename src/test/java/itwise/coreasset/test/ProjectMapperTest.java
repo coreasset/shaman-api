@@ -6,10 +6,8 @@ import static org.junit.Assert.*;
 import itwise.coreasset.shaman.api.config.DataSourceConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
 import itwise.coreasset.shaman.api.config.MyBatisConfig;
-import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
 import itwise.coreasset.shaman.api.mapper.ProjectMapper;
 import itwise.coreasset.shaman.api.model.Project;
-import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.util.ArrayList;
 
@@ -33,9 +31,6 @@ public class ProjectMapperTest {
 
 	@Autowired
 	private ProjectMapper projectMapper;
-	
-	@Autowired
-	private ProjectGroupMapper groupMapper;
 	
 	@Before
 	public void setUp(){
@@ -155,48 +150,6 @@ public class ProjectMapperTest {
 		assertEquals("second findlist count", projects.size(), count);
 		
 		
-	}
-	
-	
-	/**
-	 * add & delete has ProjectGruop
-	 */
-	@Test
-	public void testHasProjectGroup(){
-		ProjectGroup group01 = new ProjectGroup();
-		ProjectGroup group02 = new ProjectGroup();
-		group01.setName("hasGroupTest01");
-		group02.setName("hasGroupTest02");
-		groupMapper.insert(group01);
-		groupMapper.insert(group02);
-		
-		Project project = new Project();
-		project.setName("hasTest01");
-		
-		projectMapper.insert(project);
-		
-		
-//		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
-//		groups.add(group01);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(1));
-//		projectMapper.addHasGroup(project);
-//		groups.add(group02);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(2));
-		
-//		add has group
-		projectMapper.addHasGroup(project.getIdx(), group01.getIdx());
-		projectMapper.addHasGroup(project.getIdx(), group02.getIdx());
-		
-		Project hasProject = projectMapper.findOne(project.getIdx());
-		assertThat(hasProject.getGroups().size(), is(2));
-		
-//		del has group
-		projectMapper.delHasGroup(project.getIdx(), group01.getIdx());
-		projectMapper.delHasGroup(project.getIdx(), group02.getIdx());
-		hasProject = projectMapper.findOne(project.getIdx());
-		assertThat(hasProject.getGroups().size(), is(0));
 	}
 
 }

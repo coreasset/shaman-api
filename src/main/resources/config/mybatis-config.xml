@@ -3,7 +3,7 @@
 <configuration>
 	<settings>
 		<setting name="logImpl" value="LOG4J"/>
-		<setting name="lazyLoadingEnabled" value="true" />
+		
 	</settings>
 	
 	<typeHandlers>
@@ -11,6 +11,4 @@
 		<typeHandler javaType="java.sql.Time" handler="org.apache.ibatis.type.DateTypeHandler"/>
 		<typeHandler javaType="java.sql.Date" handler="org.apache.ibatis.type.DateTypeHandler"/>
 	</typeHandlers>
-	
-
 </configuration>
