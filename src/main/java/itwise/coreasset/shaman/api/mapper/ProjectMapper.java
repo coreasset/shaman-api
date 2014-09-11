@@ -35,4 +35,6 @@ public interface ProjectMapper {
 	public ArrayList<Project> findList(@Param("offset") int offset, @Param("limit") int limit, @Param("keyword") String keyword, @Param("order_column") String order_column, @Param("order_dir") String order_dir);
 	public ArrayList<Project> findList(@Param("offset") int offset, @Param("limit") int limit, @Param("order_column") String order_column, @Param("order_dir") String order_dir);
 
+	public void addHasGroup(@Param("prj_idx") int prj_idx, @Param("grp_idx") int grp_idx);
+	public void delHasGroup(@Param("prj_idx") int prj_idx, @Param("grp_idx") int grp_idx);
 }

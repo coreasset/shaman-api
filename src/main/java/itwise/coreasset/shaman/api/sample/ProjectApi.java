@@ -1,9 +1,11 @@
 package itwise.coreasset.shaman.api.sample;
 
 import itwise.coreasset.shaman.api.exception.ResourceNotFoundException;
+import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
 import itwise.coreasset.shaman.api.mapper.ProjectMapper;
 import itwise.coreasset.shaman.api.model.ObjectList;
 import itwise.coreasset.shaman.api.model.Project;
+import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,6 +40,9 @@ public class ProjectApi {
 
 	@Autowired
 	private ProjectMapper projectMapper;
+	
+	@Autowired
+	private ProjectGroupMapper groupMapper;
 	
 
 	
@@ -204,15 +209,107 @@ public class ProjectApi {
 		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
 
+	/**
+	 * add ProjectGroup
+	 * 
+	 * @param String name
+	 * @return
+	 */
+//	@RequestMapping(value = "/hasGroup", method = RequestMethod.GET)
+//	public ResponseEntity<Project> hasGroup(@PathVariable String name
+//			, @RequestParam(value = "group_name", required = true) String groupName
+//			) {
+//
+//		Project project = projectMapper.findOne(name);
+//
+//		if (project == null){
+//			return new ResponseEntity<Project>(HttpStatus.NO_CONTENT);
+//		}
+//
+//		return new ResponseEntity<Project>(project, HttpStatus.OK);
+//	}
 
-	private void sleep() {
-		try {
-			Thread.sleep(1 * 1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	/**
+	 * add Has ProjectGroup
+	 *
+	 * @param String name
+	 * @return
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasGroup", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<ProjectGroup>> addHasGroup(@PathVariable int idx
+			, @RequestParam(value = "grp_idx", required = true) int groupIdx
+			) {
+
+		Project project = projectMapper.findOne(idx);
+		ProjectGroup group = groupMapper.findOne(groupIdx);
+
+		if (project == null || group == null){
+			return new ResponseEntity<ArrayList<ProjectGroup>>(HttpStatus.NO_CONTENT);
 		}
+
+		project = projectMapper.findOne(idx);
+		
+		if (project.getGroups().contains(group)){
+			return new ResponseEntity<ArrayList<ProjectGroup>>(HttpStatus.CONFLICT);
+		}
+		
+		projectMapper.addHasGroup(idx, groupIdx);
+		project = projectMapper.findOne(idx);
+		
+		return new ResponseEntity<ArrayList<ProjectGroup>>(project.getGroups(), HttpStatus.OK);
 	}
+
+	
+	/**
+	 * get Has ProjectGroups
+	 * 
+	 * @param idx
+	 * @return
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasGroup", method = RequestMethod.GET)
+	public ResponseEntity<ArrayList<ProjectGroup>> getHasGroup(@PathVariable int idx) {
+
+		Project project = projectMapper.findOne(idx);
+
+		if (project == null || project.getGroups().size() == 0){
+			return new ResponseEntity<ArrayList<ProjectGroup>>(HttpStatus.NO_CONTENT);
+		}
+
+		return new ResponseEntity<ArrayList<ProjectGroup>>(project.getGroups(), HttpStatus.OK);
+	}
+	
+	/**
+	 * delete ProjectGroup
+	 * 
+	 * @param String name
+	 * @return
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasGroup", method = RequestMethod.DELETE)
+	public ResponseEntity<ArrayList<ProjectGroup>> delHasGroup(@PathVariable int idx
+			, @RequestParam(value = "grp_idx", required = true) int groupIdx
+			) {
+
+		Project project = projectMapper.findOne(idx);
+
+		if (project == null){
+			return new ResponseEntity<ArrayList<ProjectGroup>>(HttpStatus.NO_CONTENT);
+		}
+		
+		projectMapper.delHasGroup(idx, groupIdx);
+		
+		project = projectMapper.findOne(idx);
+		
+		return new ResponseEntity<ArrayList<ProjectGroup>>(project.getGroups(), HttpStatus.ACCEPTED);
+	}
+//
+//	private void sleep() {
+//		try {
+//			Thread.sleep(1 * 1000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 	
 	/**
 	 * TODO : 디테일한 예외 상황은 나중에 다시 정리
