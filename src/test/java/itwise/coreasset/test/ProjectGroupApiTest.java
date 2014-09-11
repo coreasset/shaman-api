@@ -88,7 +88,9 @@ public class ProjectGroupApiTest {
 		projectGroup.setName("test");
 		projectGroup.setDescription("test description");
 
-		requestCreate(projectGroup);
+		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+		
+		System.out.println(projectGroup);
 	}
 	
 	/**
@@ -103,15 +105,11 @@ public class ProjectGroupApiTest {
 		projectGroup.setDescription("createFail test description");
 		
 //		first request
-		MvcResult response = requestCreate(projectGroup);
-		
-		String responseBody = response.getResponse().getContentAsString();
-		projectGroup = new ObjectMapper().readValue(responseBody, ProjectGroup.class);
-		
+		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
 		
 //		second request
 		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
-		response = this.mockMvc.perform(post("/ProjectGroup")
+		MvcResult response = this.mockMvc.perform(post("/ProjectGroup")
 				.content(requestMessage)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
@@ -131,10 +129,7 @@ public class ProjectGroupApiTest {
 		projectGroup.setName("updateTest");
 		projectGroup.setDescription("update test description");
 		
-		MvcResult response = requestCreate(projectGroup);
-		
-		String responseBody = response.getResponse().getContentAsString();
-		projectGroup = new ObjectMapper().readValue(responseBody, ProjectGroup.class);
+		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
 		
 		projectGroup.setName("updateTest2");
 		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
@@ -181,11 +176,8 @@ public class ProjectGroupApiTest {
 		projectGroup.setName("deleteTest");
 		projectGroup.setDescription("delete test description");
 		
-		MvcResult response = requestCreate(projectGroup);
+		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
 
-		String responseBody = response.getResponse().getContentAsString();
-		projectGroup = new ObjectMapper().readValue(responseBody, ProjectGroup.class);
-		
 		// delete by idx
 		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getIdx())
 				.contentType(MediaType.APPLICATION_JSON)
@@ -194,7 +186,7 @@ public class ProjectGroupApiTest {
 			.andDo(print())
 			.andReturn();
 		
-		response = requestCreate(projectGroup);
+		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
 		// delete by name
 		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getName())
 				.contentType(MediaType.APPLICATION_JSON)
@@ -236,7 +228,7 @@ public class ProjectGroupApiTest {
 
 		for (int i = 0; i < 20; i++) {
 			projectGroup.setName("listTest-" + i);
-			requestCreate(projectGroup);
+			requestCreate(projectGroup, "/ProjectGroup");
 		}
 
 //		request with no params
@@ -267,10 +259,10 @@ public class ProjectGroupApiTest {
 	}
 	
 	
-	private MvcResult requestCreate(ProjectGroup projectGroup) throws Exception {
-		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
+	private <T> T requestCreate(T obj, String uri) throws Exception {
+		String requestMessage = new ObjectMapper().writeValueAsString(obj);
 		
-		MvcResult response = this.mockMvc.perform(post("/ProjectGroup")
+		MvcResult response = this.mockMvc.perform(post(uri)
 				.content(requestMessage)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON))
@@ -278,7 +270,11 @@ public class ProjectGroupApiTest {
 			.andExpect(jsonPath("$.idx", greaterThan(0)))
 			.andDo(print())
 			.andReturn();
-		return response;
+		
+		String responseBody = response.getResponse().getContentAsString();
+		obj = (T) new ObjectMapper().readValue(responseBody, obj.getClass());
+		
+		return obj;
 	}
 	
 }
