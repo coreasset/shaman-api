@@ -27,7 +27,7 @@ public class Project implements Serializable {
 	@JsonFormat(pattern="yyyy-MM-dd hh:mm")
 	private Date regDate;
 	
-	private ArrayList<ProjectGroup> groups;
+	private ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
 	
 	public Project() {
 	}
