@@ -12,7 +12,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -76,7 +78,9 @@ public class ProjectApi {
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<Project> create(@RequestBody Project project) {
 		projectMapper.insert(project);
+		resetHasGroups(project.getIdx(), project);
 		project = projectMapper.findOne(project.getIdx());
+		
 		return new ResponseEntity<Project>(project, HttpStatus.CREATED);
 	}
 	
@@ -90,10 +94,44 @@ public class ProjectApi {
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.PUT, headers = {"Content-type=application/json"})
 	public ResponseEntity<Project> update(@PathVariable int idx, @RequestBody Project project) throws Exception {
 		if (projectMapper.isExist(idx) > 0 ){
+			
+			resetHasGroups(idx, project);
+			
 			projectMapper.update(idx, project);
+			
 			return new ResponseEntity<Project>(project, HttpStatus.CREATED);
 		} else {
 			return new ResponseEntity<Project>(HttpStatus.NO_CONTENT);
+		}
+	}
+
+
+	private void resetHasGroups(int idx, Project project) {
+		ArrayList<ProjectGroup> oldGroups = projectMapper.findOne(idx).getGroups();
+
+		//gen add, del, keep group idx set
+		Set<Integer> removeGroupIdxs = new HashSet<Integer>();
+		for (ProjectGroup oldGroup: oldGroups) {
+			removeGroupIdxs.add(oldGroup.getIdx());
+		}
+		
+		Set<Integer> addGroupIdxs = new HashSet<Integer>();
+		for (ProjectGroup group: project.getGroups()) {
+			addGroupIdxs.add(group.getIdx());
+		}
+		
+		Set<Integer> keepIdxs = new HashSet<Integer>(removeGroupIdxs);
+		keepIdxs.retainAll(addGroupIdxs);
+		removeGroupIdxs.removeAll(keepIdxs);
+		addGroupIdxs.removeAll(keepIdxs);
+		
+		//del
+		for (Integer grpIdx: removeGroupIdxs) {
+			projectMapper.delHasGroup(idx, grpIdx);
+		}
+		//add
+		for (Integer grpIdx: addGroupIdxs) {
+			projectMapper.addHasGroup(idx, grpIdx);
 		}
 	}
 

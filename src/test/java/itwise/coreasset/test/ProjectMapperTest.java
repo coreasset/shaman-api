@@ -175,16 +175,6 @@ public class ProjectMapperTest {
 		
 		projectMapper.insert(project);
 		
-		
-//		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
-//		groups.add(group01);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(1));
-//		projectMapper.addHasGroup(project);
-//		groups.add(group02);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(2));
-		
 //		add has group
 		projectMapper.addHasGroup(project.getIdx(), group01.getIdx());
 		projectMapper.addHasGroup(project.getIdx(), group02.getIdx());
@@ -197,15 +187,42 @@ public class ProjectMapperTest {
 		projectMapper.delHasGroup(project.getIdx(), group02.getIdx());
 		hasProject = projectMapper.findOne(project.getIdx());
 		assertThat(hasProject.getGroups().size(), is(0));
+
+//		add has group
+		projectMapper.addHasGroup(project.getIdx(), group01.getIdx());
+		projectMapper.addHasGroup(project.getIdx(), group02.getIdx());
+		
+		hasProject = projectMapper.findOne(project.getIdx());
+		assertThat(hasProject.getGroups().size(), is(2));
+		
+//		del has group by project
+		projectMapper.delHasGroupByProject(project.getIdx());
+		hasProject = projectMapper.findOne(project.getIdx());
+		assertThat(hasProject.getGroups().size(), is(0));
+		
+
+//		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
+//		groups.add(group01);
+//		project.setGroups(groups);
+//		assertThat(project.getGroups().size(), is(1));
+//		projectMapper.addHasGroup(project);
+//		groups.add(group02);
+//		project.setGroups(groups);
+//		assertThat(project.getGroups().size(), is(2));
+		
 	}
 
+	/**
+	 * 실제 DB에 있는 값으로 임시 테스트
+	 * @throws Exception
+	 */
 	@Test
 	public void testTmp() throws Exception {
-		Project project = projectMapper.findOne(4);
-		assertThat(project.getGroups().size(), greaterThan(0));
-		ProjectGroup group1 = project.getGroups().get(0);
-		ProjectGroup group2 = project.getGroups().get(1);
-		System.out.println(group1);
-		System.out.println(group2);
+//		Project project = projectMapper.findOne(4);
+//		assertThat(project.getGroups().size(), greaterThan(0));
+//		ProjectGroup group1 = project.getGroups().get(0);
+//		ProjectGroup group2 = project.getGroups().get(1);
+//		System.out.println(group1);
+//		System.out.println(group2);
 	}
 }

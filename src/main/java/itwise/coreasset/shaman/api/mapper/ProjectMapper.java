@@ -37,4 +37,6 @@ public interface ProjectMapper {
 
 	public void addHasGroup(@Param("prj_idx") int prj_idx, @Param("grp_idx") int grp_idx);
 	public void delHasGroup(@Param("prj_idx") int prj_idx, @Param("grp_idx") int grp_idx);
+
+	public void delHasGroupByProject(@Param("prj_idx") int idx);
 }

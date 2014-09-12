@@ -94,6 +94,12 @@
 			and grp_idx = #{grp_idx}
 	</delete>
 	
+	<delete id="delHasGroupByProject" parameterType="int">
+		delete from groups_has_projects
+		where
+			prj_idx = #{prj_idx}
+	</delete>
+		
 	<select id="hasGroups" resultMap="itwise.coreasset.shaman.api.mapper.ProjectGroupMapper.ProjectGroupMap">
 		SELECT 
 			idx, name, description, reg_date 
