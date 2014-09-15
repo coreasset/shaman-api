@@ -3,9 +3,8 @@ package itwise.coreasset.test;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import itwise.coreasset.shaman.api.config.DataSourceConfig;
+import itwise.coreasset.shaman.api.config.AppContextConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
-import itwise.coreasset.shaman.api.config.MyBatisConfig;
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
 import itwise.coreasset.shaman.api.mapper.ProjectMapper;
 import itwise.coreasset.shaman.api.model.Project;
@@ -28,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @TransactionConfiguration(defaultRollback = true)
 @MapperScan(basePackages = "itwise.coreasset.shaman.api.mapper")
-@ContextConfiguration(classes = {DataSourceConfig.class, MyBatisConfig.class}, initializers = InitEnvironmentConfig.class)
+@ContextConfiguration(classes = {AppContextConfig.class}, initializers = InitEnvironmentConfig.class)
 public class ProjectMapperTest {
 
 	@Autowired
