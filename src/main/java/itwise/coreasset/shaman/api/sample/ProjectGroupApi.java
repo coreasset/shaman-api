@@ -2,7 +2,9 @@ package itwise.coreasset.shaman.api.sample;
 
 import itwise.coreasset.shaman.api.exception.ResourceNotFoundException;
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
+import itwise.coreasset.shaman.api.mapper.ProjectMapper;
 import itwise.coreasset.shaman.api.model.ObjectList;
+import itwise.coreasset.shaman.api.model.Project;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.io.IOException;
@@ -10,7 +12,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,7 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectGroupApi {
 
 	@Autowired
-	private ProjectGroupMapper projectGroupMapper;
+	private ProjectGroupMapper groupMapper;
+	
+	@Autowired
+	private ProjectMapper projectMapper;
 	
 
 	
@@ -70,8 +77,10 @@ public class ProjectGroupApi {
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<ProjectGroup> create(@RequestBody ProjectGroup projectGroup) {
-		projectGroupMapper.insert(projectGroup);
-		projectGroup = projectGroupMapper.findOne(projectGroup.getIdx());
+		groupMapper.insert(projectGroup);
+		resetHasProjects(projectGroup.getIdx(), projectGroup);
+		projectGroup = groupMapper.findOne(projectGroup.getIdx());
+		
 		return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.CREATED);
 	}
 	
@@ -82,10 +91,11 @@ public class ProjectGroupApi {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.PUT, headers = {"Content-type=application/json"})
+	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.PUT)
 	public ResponseEntity<ProjectGroup> update(@PathVariable int idx, @RequestBody ProjectGroup projectGroup) throws Exception {
-		if (projectGroupMapper.isExist(idx) > 0 ){
-			projectGroupMapper.update(idx, projectGroup);
+		if (groupMapper.isExist(idx) > 0 ){
+			resetHasProjects(idx, projectGroup);
+			groupMapper.update(idx, projectGroup);
 			return new ResponseEntity<ProjectGroup>(projectGroup, HttpStatus.CREATED);
 		} else {
 			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
@@ -103,8 +113,8 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.DELETE)
 	public ResponseEntity<ProjectGroup> delete(@PathVariable int idx) throws Exception {
 		
-		if (projectGroupMapper.isExist(idx) > 0 ){
-			projectGroupMapper.delete(idx);
+		if (groupMapper.isExist(idx) > 0 ){
+			groupMapper.delete(idx);
 			return new ResponseEntity<ProjectGroup>(HttpStatus.ACCEPTED);
 		} else {
 			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
@@ -122,9 +132,9 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{name:^.*[^\\d].*$}", method = RequestMethod.DELETE)
 	public ResponseEntity<ProjectGroup> delete(@PathVariable String name) throws Exception {
 		
-		int idx = projectGroupMapper.isExist(name);
+		int idx = groupMapper.isExist(name);
 		if (idx > 0){
-			projectGroupMapper.delete(idx);
+			groupMapper.delete(idx);
 			return new ResponseEntity<ProjectGroup>(HttpStatus.ACCEPTED);
 		} else {
 			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
@@ -144,7 +154,7 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{idx:^[\\d]+$}", method = RequestMethod.GET)
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable int idx) throws ResourceNotFoundException {
 		
-		ProjectGroup projectGroup = projectGroupMapper.findOne(idx);
+		ProjectGroup projectGroup = groupMapper.findOne(idx);
 		
 		if (projectGroup == null){
 			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
@@ -162,7 +172,7 @@ public class ProjectGroupApi {
 	@RequestMapping(value = "/{name:^.*[^\\d].*$}", method = RequestMethod.GET)
 	public ResponseEntity<ProjectGroup> findOne(@PathVariable String name) {
 		
-		ProjectGroup projectGroup = projectGroupMapper.findOne(name);
+		ProjectGroup projectGroup = groupMapper.findOne(name);
 
 		if (projectGroup == null){
 			return new ResponseEntity<ProjectGroup>(HttpStatus.NO_CONTENT);
@@ -176,7 +186,7 @@ public class ProjectGroupApi {
 	 * Get List
 	 * 
 	 * @param list
-	 * @return
+	 * @return ArrayList<ProjectGroup>
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public ResponseEntity<ObjectList> findList(
@@ -187,7 +197,7 @@ public class ProjectGroupApi {
 			, @RequestParam(value = "order_dir", required = false, defaultValue = "DESC") String order_dir
 		) {
 		
-		int count = projectGroupMapper.count();
+		int count = groupMapper.count();
 		int lastPage = (int)Math.ceil(count / limit) + 1;
 		
 		if(page < 1) page = 1;
@@ -195,23 +205,86 @@ public class ProjectGroupApi {
 		
 		int offset = (page - 1) * limit;
 		
-		ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList(offset, limit, keyword, order_column, order_dir);
+		ArrayList<ProjectGroup> projectGroups = groupMapper.findList(offset, limit, keyword, order_column, order_dir);
 		ObjectList<ProjectGroup> response = new ObjectList<ProjectGroup>();
 		
 		response.setList(projectGroups);
 		response.setTotalCount(count);
-		response.setFilterCount(keyword == null ? count : projectGroupMapper.count(keyword));
+		response.setFilterCount(keyword == null ? count : groupMapper.count(keyword));
 		return new ResponseEntity<ObjectList>(response, HttpStatus.OK);
 	}
 
 
-	private void sleep() {
-		try {
-			Thread.sleep(1 * 1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	/**
+	 * add Has Project
+	 *
+	 * @param String name
+	 * @return ArrayList<Project>
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasProject", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<Project>> addHasProject(@PathVariable int idx
+			, @RequestParam(value = "prj_idx", required = true) int projectIdx
+			) {
+
+		ProjectGroup group = groupMapper.findOne(idx);
+		Project project = projectMapper.findOne(projectIdx);
+
+		if (project == null || group == null){
+			return new ResponseEntity<ArrayList<Project>>(HttpStatus.NO_CONTENT);
 		}
+
+		group = groupMapper.findOne(idx);
+		
+		if (group.getProjects().contains(project)){
+			return new ResponseEntity<ArrayList<Project>>(HttpStatus.CONFLICT);
+		}
+		
+		groupMapper.addHasProject(idx, projectIdx);
+		group = groupMapper.findOne(idx);
+		
+		return new ResponseEntity<ArrayList<Project>>(group.getProjects(), HttpStatus.OK);
+	}
+
+	/**
+	 * delete Project
+	 * 
+	 * @param String name
+	 * @return ArrayList<Project>
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasProject", method = RequestMethod.DELETE)
+	public ResponseEntity<ArrayList<Project>> delHasProject(@PathVariable int idx
+			, @RequestParam(value = "prj_idx", required = true) int projectIdx
+			) {
+
+		ProjectGroup group = groupMapper.findOne(idx);
+
+		if (group == null){
+			return new ResponseEntity<ArrayList<Project>>(HttpStatus.NO_CONTENT);
+		}
+		
+		groupMapper.delHasProject(idx, projectIdx);
+		
+		group = groupMapper.findOne(idx);
+		
+		return new ResponseEntity<ArrayList<Project>>(group.getProjects(), HttpStatus.ACCEPTED);
+	}
+	
+	/**
+	 * get Has Projects
+	 * 
+	 * @param idx
+	 * @return ArrayList<Project>
+	 */
+	@RequestMapping(value = "/{idx:^[\\d]+$}/hasProject", method = RequestMethod.GET)
+	public ResponseEntity<ArrayList<Project>> getHasProject(@PathVariable int idx) {
+
+		ProjectGroup group = groupMapper.findOne(idx);
+
+		if (group == null || group.getProjects().size() == 0){
+			return new ResponseEntity<ArrayList<Project>>(HttpStatus.NO_CONTENT);
+		}
+
+		return new ResponseEntity<ArrayList<Project>>(group.getProjects(), HttpStatus.OK);
 	}
 	
 	/**
@@ -238,4 +311,40 @@ public class ProjectGroupApi {
 		return new ResponseEntity<Map<String, String>>(errorMap, HttpStatus.NOT_FOUND);
 
 	}
+	
+	/**
+	 * Reset ProjectGroup has Projects
+	 * 
+	 * @param int idx
+	 * @param ProjectGroup group
+	 */
+	private void resetHasProjects(int idx, ProjectGroup group) {
+		ArrayList<Project> oldProjects = groupMapper.findOne(idx).getProjects();
+
+		//gen add, del, keep project idx set
+		Set<Integer> removeProjectIdxs = new HashSet<Integer>();
+		for (Project project: oldProjects) {
+			removeProjectIdxs.add(project.getIdx());
+		}
+		
+		Set<Integer> addProjectIdxs = new HashSet<Integer>();
+		for (Project project: group.getProjects()) {
+			addProjectIdxs.add(project.getIdx());
+		}
+		
+		Set<Integer> keepIdxs = new HashSet<Integer>(removeProjectIdxs);
+		keepIdxs.retainAll(addProjectIdxs);
+		removeProjectIdxs.removeAll(keepIdxs);
+		addProjectIdxs.removeAll(keepIdxs);
+		
+		//del
+		for (Integer projectIdx: removeProjectIdxs) {
+			groupMapper.delHasProject(idx, projectIdx);
+		}
+		//add
+		for (Integer projectIdx: addProjectIdxs) {
+			groupMapper.addHasProject(idx, projectIdx);
+		}
+	}
+
 }
