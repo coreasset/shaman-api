@@ -3,10 +3,11 @@ package itwise.coreasset.test;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import itwise.coreasset.shaman.api.config.DataSourceConfig;
+import itwise.coreasset.shaman.api.config.AppContextConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
-import itwise.coreasset.shaman.api.config.MyBatisConfig;
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
+import itwise.coreasset.shaman.api.mapper.ProjectMapper;
+import itwise.coreasset.shaman.api.model.Project;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.util.ArrayList;
@@ -14,7 +15,6 @@ import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -25,12 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @Transactional
 @TransactionConfiguration(defaultRollback = true)
-@MapperScan(basePackages = "itwise.coreasset.shaman.api.mapper")
-@ContextConfiguration(classes = {DataSourceConfig.class, MyBatisConfig.class}, initializers = InitEnvironmentConfig.class)
+@ContextConfiguration(classes = {AppContextConfig.class}, initializers = InitEnvironmentConfig.class)
 public class ProjectGroupMapperTest {
 
 	@Autowired
-	private ProjectGroupMapper projectGroupMapper;
+	private ProjectGroupMapper groupMapper;
+	
+	@Autowired
+	private ProjectMapper projectMapper;
 	
 	@Before
 	public void setUp(){
@@ -46,25 +48,25 @@ public class ProjectGroupMapperTest {
 		projectGroup.setDescription("project groups mapper 테스트");
 		
 		// insert
-		projectGroupMapper.insert(projectGroup);
+		groupMapper.insert(projectGroup);
 		
 		// findone
-		ProjectGroup projectGroup2 = projectGroupMapper.findOne(projectGroup.getIdx());
+		ProjectGroup projectGroup2 = groupMapper.findOne(projectGroup.getIdx());
 		assertEquals("compare name field", projectGroup.getName(), projectGroup2.getName());
 		assertEquals("compare description field", projectGroup.getDescription(), projectGroup2.getDescription());
 		
 		// update
 		projectGroup2.setName("project groups CRUD test - update");
-		projectGroupMapper.update(projectGroup2.getIdx(), projectGroup2);
+		groupMapper.update(projectGroup2.getIdx(), projectGroup2);
 		
 		// findone
-		ProjectGroup projectGroup3 = projectGroupMapper.findOne(projectGroup2.getIdx());
+		ProjectGroup projectGroup3 = groupMapper.findOne(projectGroup2.getIdx());
 		assertEquals("compare name field", projectGroup2.getName(), projectGroup3.getName());
 		assertEquals("compare description field", projectGroup2.getDescription(), projectGroup3.getDescription());
 		
 		// delete
-		projectGroupMapper.delete(projectGroup3.getIdx());
-		ProjectGroup projectGroup4 = projectGroupMapper.findOne(projectGroup3.getIdx());
+		groupMapper.delete(projectGroup3.getIdx());
+		ProjectGroup projectGroup4 = groupMapper.findOne(projectGroup3.getIdx());
 		assertEquals("compare description field", projectGroup4, null);
 		
 	}
@@ -80,40 +82,40 @@ public class ProjectGroupMapperTest {
 		int idx, allCount;
 		
 		// idx field search number
-		idx = projectGroupMapper.isExist(-1);
+		idx = groupMapper.isExist(-1);
 		assertEquals("is 0", idx, 0);
 		
 		//All Count
-		allCount = projectGroupMapper.count();
+		allCount = groupMapper.count();
 		
 		ProjectGroup projectGroup = new ProjectGroup();
 		projectGroup.setDescription("테스트");
 		
 		projectGroup.setName("count test 1");
-		projectGroupMapper.insert(projectGroup);
+		groupMapper.insert(projectGroup);
 
 		// name match
-		idx= projectGroupMapper.isExist(projectGroup.getName());
+		idx= groupMapper.isExist(projectGroup.getName());
 		assertThat("is 1", idx, greaterThan(0));
 		
 		
 		// idx match
-		idx = projectGroupMapper.isExist(projectGroup.getIdx());
+		idx = groupMapper.isExist(projectGroup.getIdx());
 		assertThat("is 1", idx,  greaterThan(0));
 		
 		
 		// name field search result is no match
-		idx = projectGroupMapper.isExist("count test");
+		idx = groupMapper.isExist("count test");
 		assertEquals("is 0", idx, 0);
 
 		// one more insert
 		projectGroup.setName("count test 2");
-		projectGroupMapper.insert(projectGroup);
+		groupMapper.insert(projectGroup);
 		
 		//like match
-		idx = projectGroupMapper.count("count test");
+		idx = groupMapper.count("count test");
 		assertEquals("like query result is 2", idx, 2);
-		assertEquals("all count + 2", projectGroupMapper.count(), allCount + 2);
+		assertEquals("all count + 2", groupMapper.count(), allCount + 2);
 	}
 	
 	/**
@@ -123,8 +125,8 @@ public class ProjectGroupMapperTest {
 	public void testProjectGroupFindList(){
 		
 		//page 1, limit 5
-		if(projectGroupMapper.count() > 5){
-			ArrayList<ProjectGroup> projectGroups = projectGroupMapper.findList(1, 5);
+		if(groupMapper.count() > 5){
+			ArrayList<ProjectGroup> projectGroups = groupMapper.findList(1, 5);
 			assertEquals(5, projectGroups.size());
 		}
 		
@@ -134,19 +136,63 @@ public class ProjectGroupMapperTest {
 		for (int i = 1; i <= 20; i++) {
 			projectGroup.setName("findlist" + i + " test - insert");
 			System.out.println(projectGroup.getName());
-			projectGroupMapper.insert(projectGroup);
+			groupMapper.insert(projectGroup);
 		}
 
 		String keyword = "findlist1";
 		ArrayList<ProjectGroup> projectGroups;
-		projectGroups = projectGroupMapper.findList(0, 100, keyword);
-		int count = projectGroupMapper.count(keyword);
+		projectGroups = groupMapper.findList(0, 100, keyword);
+		int count = groupMapper.count(keyword);
 		assertEquals("fist findlist count", projectGroups.size(), count);
 
 		keyword = "findlist2";
-		count = projectGroupMapper.count(keyword);
-		projectGroups = projectGroupMapper.findList(0, 100, keyword);
+		count = groupMapper.count(keyword);
+		projectGroups = groupMapper.findList(0, 100, keyword);
 		assertEquals("second findlist count", projectGroups.size(), count);
 	}
 
+	/**
+	 * add & delete has ProjectGruop
+	 */
+	@Test
+	public void testHasProject(){
+		//init project
+		Project project01 = new Project();
+		Project project02 = new Project();
+		project01.setName("testHasProject-project01");
+		project02.setName("testHasProject-project02");
+		projectMapper.insert(project01);
+		projectMapper.insert(project02);
+
+		//init group
+		ProjectGroup group = new ProjectGroup();
+		group.setName("testHasProject-group");
+		groupMapper.insert(group);
+		
+//		add has project
+		groupMapper.addHasProject(group.getIdx(), project01.getIdx());
+		groupMapper.addHasProject(group.getIdx(), project02.getIdx());
+		
+		ProjectGroup findGroup = groupMapper.findOne(group.getIdx());
+		assertThat(findGroup.getProjects().size(), is(2));
+		
+//		del has project
+		groupMapper.delHasProject(group.getIdx(), project01.getIdx());
+		groupMapper.delHasProject(group.getIdx(), project02.getIdx());
+		findGroup = groupMapper.findOne(group.getIdx());
+		assertThat(findGroup.getProjects().size(), is(0));
+
+//		add has project
+		groupMapper.addHasProject(group.getIdx(), project01.getIdx());
+		groupMapper.addHasProject(group.getIdx(), project02.getIdx());
+		
+		findGroup = groupMapper.findOne(group.getIdx());
+		assertThat(findGroup.getProjects().size(), is(2));
+		
+	}
+	
+	@Test
+	public void testTmp() throws Exception{
+		
+	}
 }

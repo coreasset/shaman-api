@@ -1,6 +1,7 @@
 package itwise.coreasset.shaman.api.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,6 +26,8 @@ public class ProjectGroup implements Serializable {
 	
 	@JsonFormat(pattern="yyyy-MM-dd hh:mm")
 	private Date regDate;
+	
+	private ArrayList<Project> projects = new ArrayList<Project>();
 
 	public ProjectGroup() {
 	}
@@ -68,5 +71,19 @@ public class ProjectGroup implements Serializable {
 
 	public void setRegDate(Date regDate) {
 		this.regDate = regDate;
+	}
+
+	/**
+	 * @return the projects
+	 */
+	public ArrayList<Project> getProjects() {
+		return projects;
+	}
+
+	/**
+	 * @param projects the projects to set
+	 */
+	public void setProjects(ArrayList<Project> projects) {
+		this.projects = projects;
 	}
 }

@@ -34,45 +34,17 @@
 			idx = #{idx}
 	</update>
 
-	<!-- 
-	<select id="getList" resultMap="ProjectGroup">
-		<include refid="select_table" />
-		ORDER BY
-			reg_date DESC
-	</select>
-	 -->
-	
-	<!-- 
-	<select id="getProjectGroup" resultType="ProjectGroup">
-	-->
-	<resultMap id="ProjectGroup" type="ProjectGroup">
+	<resultMap id="ProjectGroupMap" type="ProjectGroup">
 		<id property="idx" column="idx" />
 		<result property="name" column="name"/>
 		<result property="description" column="description"/>
 		<result property="regDate" column="reg_date" jdbcType="DATE" javaType="java.util.Date"/>
-		<!-- 
-		<collection property="projects" javaType="java.util.ArrayList" resultMap="Project"/>
-		-->
+	</resultMap>
+
+	<resultMap id="ProjectGroupHasProjectMap" extends="ProjectGroupMap" type="ProjectGroup">
+		<collection property="projects" column="idx" javaType="ArrayList" ofType="Project" select="hasProjects" />
 	</resultMap>
 	
-	<!-- 
-	<resultMap id="ProjectGroupList" extends="ProjectGroup" type="ProjectGroup">
-		<association property="bbsInfoBean" column="{bbsId=S_BBS_ID}" select="kr.xboard.dao.bbsinfo.BbsInfoDao.getBbsInfoItem"/>
-		<collection property="bbsFileBeans" ofType="BbsFileBean" column="{bbsId=S_BBS_ID,bbsIdx=I_BBS_IDX}" select="kr.xboard.dao.bbsfile.BbsFileDao.getBbsFileList"/>
-		<collection property="bbsCommentBeans" ofType="BbsCommentBean" column="{bbsId=S_BBS_ID,bbsIdx=I_BBS_IDX}" select="kr.xboard.dao.bbscomment.BbsCommentDao.getBbsCommentList"/>
-	</resultMap>
-	-->
-
-
-<!-- 
-	<select id="isExist" parameterType="map" resultType="int">
-		SELECT count(idx) as cnt FROM project_groups
-		WHERE
-			0 = 0
-			<if test="map.idx != null"> and idx = #{map.idx}</if>
-			<if test="map.keyword != null"> and name = #{map.keyword}</if>
-	</select>
--->
 	<select id="isExist" resultType="int" >
 		select result from (
 			SELECT IFNULL(idx,0) as result, count(idx) as cnt FROM project_groups
@@ -95,8 +67,30 @@
 			or description like '%${keyword}%'
 		</if>
 	</select>
+
+	<insert id="addHasProject" parameterType="map">
+		insert into groups_has_projects
+		(prj_idx, grp_idx)
+		values (#{prj_idx}, #{grp_idx})
+	</insert>
+
+	<delete id="delHasProject" parameterType="map">
+		delete from groups_has_projects
+		where
+			prj_idx = #{prj_idx}
+			and grp_idx = #{grp_idx}
+	</delete>
 	
-	<select id="findOne" resultMap="ProjectGroup">
+	<select id="hasProjects" resultMap="itwise.coreasset.shaman.api.mapper.ProjectMapper.ProjectMap">
+		SELECT 
+			idx, name, description, reg_date 
+		FROM projects as a
+		inner join groups_has_projects as b on a.idx = b.prj_idx
+		where
+			b.grp_idx = #{idx}
+	</select>
+			
+	<select id="findOne" resultMap="ProjectGroupHasProjectMap">
 		SELECT idx, name, description , reg_date FROM project_groups
 		WHERE
 			0 = 0
@@ -108,9 +102,12 @@
 			</if>
 	</select>
 
-	<select id="findList" parameterType="map" resultMap="ProjectGroup">
-		SELECT idx, name, description , reg_date 
-		FROM project_groups
+	<select id="findList" parameterType="map" resultMap="ProjectGroupMap">
+		SELECT 
+			a.idx, a.name, a.description , a.reg_date
+			,count(b.prj_idx) as prj_count 
+		FROM project_groups as a 
+		left outer join groups_has_projects as b on a.idx = b.grp_idx
 		<if test="_parameter.containsKey('keyword')">
 			<if test="keyword != null">
 			where
@@ -118,6 +115,8 @@
 				or description like '%${keyword}%'
 			</if>
 		</if>
+		
+		group by a.idx
 		order by 
 		
 		<choose>
@@ -125,7 +124,7 @@
 				${order_column} ${order_dir}
 			</when>
 			<otherwise>
-				idx desc
+				a.idx desc
 			</otherwise>
 		</choose>
 		

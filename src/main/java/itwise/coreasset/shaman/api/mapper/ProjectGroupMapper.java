@@ -33,4 +33,7 @@ public interface ProjectGroupMapper {
 	public ArrayList<ProjectGroup> findList(@Param("offset") int offset, @Param("limit") int limit, @Param("keyword") String keyword, @Param("order_column") String order_column, @Param("order_dir") String order_dir);
 	public ArrayList<ProjectGroup> findList(@Param("offset") int offset, @Param("limit") int limit, @Param("order_column") String order_column, @Param("order_dir") String order_dir);
 
+	public void addHasProject(@Param("grp_idx") int groupIdx, @Param("prj_idx") int projectIdx);
+	public void delHasProject(@Param("grp_idx") int groupIdx, @Param("prj_idx") int projectIdx);
+
 }
