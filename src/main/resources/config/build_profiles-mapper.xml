@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="itwise.coreasset.shaman.api.mapper.BuildProfileMapper">
+	
+	<sql id="select_table">
+		SELECT idx, name, description, reg_date, flavor, goal, param FROM build_profiles as
+	</sql>
+
+	<insert id="insert" parameterType="BuildProfile" useGeneratedKeys="true" keyProperty="idx">
+		INSERT INTO 
+			build_profiles (name, description, reg_date, flavor, goal, param)
+		VALUES
+			(#{name}, #{description}, now(), #{flavor}, #{goal}, #{param})
+	</insert>
+
+	<delete id="delete" parameterType="BuildProfile">
+		DELETE FROM build_profiles
+		WHERE 
+			idx = #{idx}
+	</delete>
+	
+	<update id="update" parameterType="map">
+		UPDATE build_profiles
+		<set>
+			<if test="profile.name != null">name = #{profile.name},</if>
+			<if test="profile.description != null">description = #{profile.description},</if>
+			<if test="profile.flavor != null">flavor = #{profile.flavor},</if>
+			<if test="profile.goal != null">goal = #{profile.goal},</if>
+			<if test="profile.param != null">param = #{profile.param},</if>
+		</set>
+		WHERE 
+			idx = #{idx}
+	</update>
+
+
+	<select id="isExist" resultType="int" >
+		select result from (
+			SELECT IFNULL(idx,0) as result, count(idx) as cnt FROM build_profiles
+			WHERE
+				0 = 0
+				<if test="_parameter.containsKey('idx')">
+					<if test="idx != null"> and idx = #{idx}</if>
+				</if>
+				<if test="_parameter.containsKey('keyword')">
+					<if test="keyword != null"> and name = #{keyword}</if>
+				</if>
+		) as a
+	</select>
+	
+	<select id="count" parameterType="String" resultType="int">
+		SELECT count(idx) as cnt FROM build_profiles
+		<if test="keyword != null">
+		WHERE
+			name like '%${keyword}%'
+			or description like '%${keyword}%'
+		</if>
+	</select>
+
+	<resultMap id="BuildProfileMap" type="BuildProfile">
+		<id property="idx" column="idx" />
+		<result property="name" column="name"/>
+		<result property="groupId" column="group_id"/>
+		<result property="artifactId" column="artifact_id"/>
+		<result property="packageType" column="package_type"/>
+		<result property="description" column="description"/>
+		<result property="buildProfileIdx" column="build_profile_idx"/>
+		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
+	</resultMap>
+
+	<resultMap id="BuildProfileHasGroupMap" extends="BuildProfileMap" type="BuildProfile">
+		<collection property="groups" column="idx" javaType="ArrayList" ofType="BuildProfileGroup" select="hasGroups" />
+	</resultMap>
+	
+
+	<select id="findOne" resultMap="BuildProfileMap">
+		SELECT 
+			a.idx, name, a.reg_date, a.description, a.flavor, a.goal, a.param 
+		FROM build_profiles as a
+		WHERE
+			0 = 0
+			<if test="_parameter.containsKey('idx')">
+				<if test="idx != null"> and a.idx = #{idx}</if>
+			</if>
+			<if test="_parameter.containsKey('name')">
+				<if test="name!= null"> and a.name = #{name}</if>
+			</if>
+	</select>
+	
+	<select id="findList" parameterType="map" resultMap="BuildProfileMap">
+		SELECT 
+			a.idx, name, a.reg_date, a.description, a.flavor, a.goal, a.param
+		FROM build_profiles as a
+		<if test="_parameter.containsKey('keyword')">
+			<if test="keyword != null">
+			where
+				a.name like '%${keyword}%'
+				or a.description like '%${keyword}%'
+				or a.flavor = #{keyword}
+				or a.goal = #{keyword}
+				or a.param like '%${keyword}%'
+			</if>
+		</if>
+		order by 
+		<choose>
+			<when test="_parameter.containsKey('order_column') and _parameter.containsKey('order_dir')">
+				${order_column} ${order_dir}
+			</when>
+			<otherwise>
+				a.idx desc
+			</otherwise>
+		</choose>
+		limit 
+			#{offset}, #{limit}
+	</select>
+</mapper>
