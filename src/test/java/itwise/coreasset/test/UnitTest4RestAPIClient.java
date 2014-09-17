@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
@@ -224,7 +225,7 @@ public class UnitTest4RestAPIClient<T> {
 		String responseBody = result.getResponse().getContentAsString();
 		
 		if(result.getResponse().getStatus() == HttpStatus.NO_CONTENT.value() || responseBody.isEmpty()) {
-			return (T) defaultClass;
+			return defaultClass.newInstance();
 		} else {
 			return mapper.readValue(responseBody,  defaultClass);
 		}
@@ -236,7 +237,7 @@ public class UnitTest4RestAPIClient<T> {
 		if(result.getResponse().getStatus() == HttpStatus.NO_CONTENT.value() || responseBody.isEmpty()) {
 			return new ObjectList<T>();
 		} else {
-			return mapper.readValue(responseBody,  ObjectList.class);
+			return mapper.readValue(responseBody, new TypeReference<ObjectList<T>>(){});
 		}
 	}
 	
