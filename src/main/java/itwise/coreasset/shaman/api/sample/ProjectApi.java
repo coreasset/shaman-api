@@ -231,7 +231,7 @@ public class ProjectApi {
 		) {
 		
 		int count = projectMapper.count();
-		int lastPage = (int)Math.ceil(count / limit);
+		int lastPage = (int)Math.ceil((double)count / limit);
 		
 		if(page < 1) page = 1;
 		else if(page > lastPage) page = lastPage;
