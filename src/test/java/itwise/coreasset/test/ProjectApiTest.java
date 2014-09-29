@@ -3,7 +3,6 @@ package itwise.coreasset.test;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import itwise.coreasset.shaman.api.config.AppContextConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
@@ -11,24 +10,21 @@ import itwise.coreasset.shaman.api.config.WebContextConfig;
 import itwise.coreasset.shaman.api.model.ObjectList;
 import itwise.coreasset.shaman.api.model.Project;
 
+import java.util.HashMap;
+
+import org.apache.commons.lang.SerializationUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {WebContextConfig.class, AppContextConfig.class}, initializers = InitEnvironmentConfig.class)
@@ -40,12 +36,26 @@ public class ProjectApiTest {
 	@Autowired
 	private WebApplicationContext context;
 	
+	private UnitTest4RestAPIClient<Project> client;
+	
 	private MockMvc mockMvc;
+	
+	Project project;
 	
 	@Before
 	public void setup(){
-		MockitoAnnotations.initMocks(this);
-		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+		client = new UnitTest4RestAPIClient<Project>(context);
+		
+//		TODO: eclipse에서만 되는건지 jenkins 같은 다른 플랫폼에서도 되는지 확인 해야 함
+		client.setIsPrint(java.lang.management.ManagementFactory.getRuntimeMXBean().
+				getInputArguments().toString().indexOf("-agentlib:jdwp") > 0);
+		
+		client.setDefaultURI("/Project");
+		client.setDefaultClass(Project.class);
+		
+		project = new Project();
+		project.setName("test");
+		project.setDescription("test description");
 	}
 	
 	@After
@@ -84,11 +94,9 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void createOk() throws Exception {
-		Project project = new Project();
-		project.setName("test");
-		project.setDescription("test description");
-
-		requestCreate(project);
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(this.getClass() + "createOk-test");
+		client.requestCreate(project);
 	}
 	
 	/**
@@ -98,26 +106,14 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void createFail() throws Exception {
-		Project project = new Project();
-		project.setName("createFail");
-		project.setDescription("createFail test description");
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(this.getClass() + "-createFail");
 		
 //		first request
-		MvcResult response = requestCreate(project);
+		client.requestCreate(project);
 		
-		String responseBody = response.getResponse().getContentAsString();
-		project = new ObjectMapper().readValue(responseBody, Project.class);
-		
-		
-//		second request
-		String requestMessage = new ObjectMapper().writeValueAsString(project);
-		response = this.mockMvc.perform(post("/Project")
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is4xxClientError())
-			.andDo(print())
-			.andReturn();
+//		second same request
+		client.requestCreate(project, status().is4xxClientError());
 	}
 	
 	/**
@@ -127,26 +123,15 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void updateOk() throws Exception {
-		Project project = new Project();
-		project.setName("updateTest");
-		project.setDescription("update test description");
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(this.getClass() + "-updateTest");
 		
-		MvcResult response = requestCreate(project);
+//		Create
+		project = client.requestCreate(project);
 		
-		String responseBody = response.getResponse().getContentAsString();
-		project = new ObjectMapper().readValue(responseBody, Project.class);
-		
-		project.setName("updateTest2");
-		String requestMessage = new ObjectMapper().writeValueAsString(project);
-		
-		this.mockMvc.perform(put("/Project/" + project.getIdx())
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-//			.andExpect(jsonPath("$.name", is("updateTest2")))
-			.andDo(print())
-			.andReturn();
+//		Update
+		project.setName(this.getClass() + "-updateTest2");
+		client.requestUpdate(project, project.getIdx().toString());
 	}
 	
 	/**
@@ -155,19 +140,10 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void updateFail() throws Exception {
-		Project project = new Project();
-		project.setName("updateTest");
-		project.setDescription("update test description");
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(this.getClass() + "-updateFail");
 		
-		String requestMessage = new ObjectMapper().writeValueAsString(project);
-		
-		this.mockMvc.perform(put("/Project/0")
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNoContent())
-			.andDo(print())
-			.andReturn();
+		client.requestUpdate(project, "0", status().isNoContent());
 	}
 	
 	/**
@@ -177,49 +153,29 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void deleteOk() throws Exception {
-		Project project = new Project();
-		project.setName("deleteTest");
-		project.setDescription("delete test description");
-		
-		MvcResult response = requestCreate(project);
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(this.getClass() + "-deleteTest");
 
-		String responseBody = response.getResponse().getContentAsString();
-		project = new ObjectMapper().readValue(responseBody, Project.class);
+		project = client.requestCreate(project);
 		
 		// delete by idx
-		this.mockMvc.perform(delete("/Project/" + project.getIdx())
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isAccepted())
-//			.andDo(print())
-			.andReturn();
-		
-		response = requestCreate(project);
-		
+		client.requestDelete(project.getIdx().toString());
+
 		// delete by name
-		this.mockMvc.perform(delete("/Project/" + project.getName())
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isAccepted())
-//			.andDo(print())
-			.andReturn();
+		client.requestCreate(project);
+		client.requestDelete(project.getName());
 	}
 	
 
 	/**
 	 * Project Delete Fail
-	 * Response Http Status 4xx
+	 * Response Http Status expect No Content
 	 * 
 	 * @throws Exception
 	 */
 	@Test
 	public void deleteFail() throws Exception {
-		this.mockMvc.perform(delete("/Project/0")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNoContent())
-			.andDo(print())
-			.andReturn();
+		client.requestDelete("0", status().isNoContent());
 	}
 
 	
@@ -230,56 +186,27 @@ public class ProjectApiTest {
 	 */
 	@Test
 	public void findList() throws Exception{
-		
 //		init data
-		Project project = new Project();
-		project.setDescription("list test description");
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setDescription(this.getClass() + "-list test description");
 
+//		20개 insert
 		for (int i = 0; i < 20; i++) {
-			project.setName("listTest-" + i);
-			requestCreate(project);
+			project.setName(this.getClass() + "-listTest-" + i);
+			client.requestCreate(project);
 		}
 
-//		request with no params
-		MvcResult response = this.mockMvc.perform(get("/Project")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
-		String responseBody = response.getResponse().getContentAsString();
-		ObjectList<Project> list = new ObjectMapper().readValue(responseBody, ObjectList.class);
+		//no param fisrt page
+		ObjectList<Project> list = client.requestGetList();
 		assertThat("list count", list.getList().size(), is(10));
 		
-		response = this.mockMvc.perform(get("/Project")
-				.param("page", "2")
-				.param("limit", "20")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
 		
-//		request with params
-		responseBody = response.getResponse().getContentAsString();
-		list = new ObjectMapper().readValue(responseBody, ObjectList.class);
+		//2 page, limit 20
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("page", "2");
+		params.put("limit", "20");
+		list = client.requestGetList(params);
+		
 		assertThat("list count", list.getList().size(), is(20));
-
 	}
-	
-	
-	private MvcResult requestCreate(Project project) throws Exception {
-		String requestMessage = new ObjectMapper().writeValueAsString(project);
-		
-		MvcResult response = this.mockMvc.perform(post("/Project")
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.idx", greaterThan(0)))
-			.andDo(print())
-			.andReturn();
-		return response;
-	}
-	
 }
