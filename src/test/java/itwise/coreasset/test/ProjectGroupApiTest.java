@@ -3,7 +3,6 @@ package itwise.coreasset.test;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import itwise.coreasset.shaman.api.config.AppContextConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
@@ -11,24 +10,21 @@ import itwise.coreasset.shaman.api.config.WebContextConfig;
 import itwise.coreasset.shaman.api.model.ObjectList;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
 
+import java.util.HashMap;
+
+import org.apache.commons.lang.SerializationUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {WebContextConfig.class, AppContextConfig.class}, initializers = InitEnvironmentConfig.class)
@@ -42,10 +38,23 @@ public class ProjectGroupApiTest {
 	
 	private MockMvc mockMvc;
 	
+	private UnitTest4RestAPIClient<ProjectGroup> client;
+	
+	private ProjectGroup group;
+	
 	@Before
 	public void setup(){
-		MockitoAnnotations.initMocks(this);
-		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+		client = new UnitTest4RestAPIClient<ProjectGroup>(context);
+		
+//		TODO: eclipse에서만 되는건지 jenkins 같은 다른 플랫폼에서도 되는지 확인 해야 함
+		client.setIsPrint(java.lang.management.ManagementFactory.getRuntimeMXBean().
+				getInputArguments().toString().indexOf("-agentlib:jdwp") > 0);
+		
+		client.setDefaultURI("/ProjectGroup");
+		client.setDefaultClass(ProjectGroup.class);
+
+		group = new ProjectGroup();
+		group.setDescription("test description");
 	}
 	
 	@After
@@ -84,13 +93,10 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void createOk() throws Exception {
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("test");
-		projectGroup.setDescription("test description");
-
-		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setName(this.getClass() + "createOk-test");
 		
-		System.out.println(projectGroup);
+		client.requestCreate(group);
 	}
 	
 	/**
@@ -100,22 +106,14 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void createFail() throws Exception {
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("createFail");
-		projectGroup.setDescription("createFail test description");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setName(this.getClass() + "-createFail");
 		
 //		first request
-		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+		client.requestCreate(group);
 		
-//		second request
-		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
-		MvcResult response = this.mockMvc.perform(post("/ProjectGroup")
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is4xxClientError())
-			.andDo(print())
-			.andReturn();
+//		second same request
+		client.requestCreate(group, status().is4xxClientError());
 	}
 	
 	/**
@@ -125,23 +123,15 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void updateOk() throws Exception {
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("updateTest");
-		projectGroup.setDescription("update test description");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setName(this.getClass() + "-updateTest");
 		
-		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+//		Create
+		group = client.requestCreate(group);
 		
-		projectGroup.setName("updateTest2");
-		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
-		
-		this.mockMvc.perform(put("/ProjectGroup/" + projectGroup.getIdx())
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-//			.andExpect(jsonPath("$.name", is("updateTest2")))
-			.andDo(print())
-			.andReturn();
+//		Update
+		group.setName(this.getClass() + "-updateTest2");
+		client.requestUpdate(group, group.getIdx().toString());
 	}
 	
 	/**
@@ -150,19 +140,10 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void updateFail() throws Exception {
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("updateTest");
-		projectGroup.setDescription("update test description");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setName(this.getClass() + "-updateFail");
 		
-		String requestMessage = new ObjectMapper().writeValueAsString(projectGroup);
-		
-		this.mockMvc.perform(put("/ProjectGroup/0")
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNoContent())
-			.andDo(print())
-			.andReturn();
+		client.requestUpdate(group, "0", status().isNoContent());
 	}
 	
 	/**
@@ -172,28 +153,17 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void deleteOk() throws Exception {
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("deleteTest");
-		projectGroup.setDescription("delete test description");
-		
-		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setName(this.getClass() + "-deleteTest");
 
-		// delete by idx
-		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getIdx())
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isAccepted())
-			.andDo(print())
-			.andReturn();
+		group = client.requestCreate(group);
 		
-		projectGroup = requestCreate(projectGroup, "/ProjectGroup");
+		// delete by idx
+		client.requestDelete(group.getIdx().toString());
+
 		// delete by name
-		this.mockMvc.perform(delete("/ProjectGroup/" + projectGroup.getName())
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isAccepted())
-			.andDo(print())
-			.andReturn();
+		client.requestCreate(group);
+		client.requestDelete(group.getName());
 	}
 	
 
@@ -205,12 +175,7 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void deleteFail() throws Exception {
-		this.mockMvc.perform(delete("/ProjectGroup/0")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNoContent())
-			.andDo(print())
-			.andReturn();
+		client.requestDelete("0", status().isNoContent());
 	}
 
 	
@@ -221,60 +186,27 @@ public class ProjectGroupApiTest {
 	 */
 	@Test
 	public void findList() throws Exception{
-		
 //		init data
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setDescription("list test description");
+		ProjectGroup group = (ProjectGroup) SerializationUtils.clone(this.group);
+		group.setDescription(this.getClass() + "-list test description");
 
+//		20개 insert
 		for (int i = 0; i < 20; i++) {
-			projectGroup.setName("listTest-" + i);
-			requestCreate(projectGroup, "/ProjectGroup");
+			group.setName(this.getClass() + "-listTest-" + i);
+			client.requestCreate(group);
 		}
 
-//		request with no params
-		MvcResult response = this.mockMvc.perform(get("/ProjectGroup")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
-		String responseBody = response.getResponse().getContentAsString();
-		ObjectList<ProjectGroup> list = new ObjectMapper().readValue(responseBody, ObjectList.class);
+		//no param fisrt page
+		ObjectList<ProjectGroup> list = client.requestGetList();
 		assertThat("list count", list.getList().size(), is(10));
 		
-		response = this.mockMvc.perform(get("/ProjectGroup")
-				.param("page", "2")
-				.param("limit", "20")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
 		
-//		request with params
-		responseBody = response.getResponse().getContentAsString();
-		list = new ObjectMapper().readValue(responseBody, ObjectList.class);
+		//2 page, limit 20
+		HashMap<String, String> params = new HashMap<String, String>();
+		params.put("page", "2");
+		params.put("limit", "20");
+		list = client.requestGetList(params);
+		
 		assertThat("list count", list.getList().size(), is(20));
-
 	}
-	
-	
-	private <T> T requestCreate(T obj, String uri) throws Exception {
-		String requestMessage = new ObjectMapper().writeValueAsString(obj);
-		
-		MvcResult response = this.mockMvc.perform(post(uri)
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.idx", greaterThan(0)))
-			.andDo(print())
-			.andReturn();
-		
-		String responseBody = response.getResponse().getContentAsString();
-		obj = (T) new ObjectMapper().readValue(responseBody, obj.getClass());
-		
-		return obj;
-	}
-	
 }
