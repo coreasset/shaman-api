@@ -13,15 +13,13 @@ import itwise.coreasset.shaman.api.model.ProjectGroup;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
 
+import org.apache.commons.lang.SerializationUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -29,12 +27,9 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -47,15 +42,36 @@ public class ProjectHasGroupApiTest {
 	@Autowired
 	private WebApplicationContext context;
 	
+	private UnitTest4RestAPIClient<ProjectGroup> groupClient;
+	private UnitTest4RestAPIClient<Project> projectClient;
+	
+	private ProjectGroup group;
+	private Project project;
+	
 	private MockMvc mockMvc;
-	private ObjectMapper mapper;
 	
 	@Before
 	public void setup(){
-		MockitoAnnotations.initMocks(this);
-		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+//		TODO: eclipse에서만 되는건지 jenkins 같은 다른 플랫폼에서도 되는지 확인 해야 함
+		Boolean isDebug = (java.lang.management.ManagementFactory.getRuntimeMXBean().
+				getInputArguments().toString().indexOf("-agentlib:jdwp") > 0);
 		
-		mapper = new ObjectMapper();
+		groupClient = new UnitTest4RestAPIClient<ProjectGroup>(context);
+		groupClient.setIsPrint(isDebug);
+		groupClient.setDefaultURI("/ProjectGroup");
+		groupClient.setDefaultClass(ProjectGroup.class);
+		
+		projectClient = new UnitTest4RestAPIClient<Project>(context);
+		projectClient.setIsPrint(isDebug);
+		projectClient.setDefaultURI("/Project");
+		projectClient.setDefaultClass(Project.class);
+		
+		group = new ProjectGroup();
+		group.setDescription("test description");
+		
+		project = new Project();
+		project.setDescription("test description");
+		
 		assertThat(0,is(0));
 	}
 	
@@ -72,16 +88,10 @@ public class ProjectHasGroupApiTest {
 	 */
 //	@Test
 	public void createOk() throws Exception {
-		Project project = new Project();
-		project.setName("test");
-		project.setDescription("test description");
-		project = requestCreate(project, "/Project");
-		
-		ProjectGroup projectGroup = new ProjectGroup();
-		projectGroup.setName("test");
-		projectGroup.setDescription("test description");
-
-		requestCreate(projectGroup, "/ProjectGroup");
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(methodName + "-project");
+		projectClient.requestCreate(project);
 	}
 	
 	/**
@@ -113,214 +123,112 @@ public class ProjectHasGroupApiTest {
 	
 	@Test
 	public void testHasProjectGroup() throws Exception{
-		
-		HashMap<String, String> params = new HashMap<String, String>();
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		
 //		init Project
-		Project project = new Project();
-		project.setName("hasGroupTest");
-		project = requestCreate(project, "/Project");
-
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(methodName + "-project01");
+		project = projectClient.requestCreate(project);
+		
 //		init Group
-		ProjectGroup group = new ProjectGroup();
-		group.setName("hasGroupTest-01");
-		group.setDescription("test description");
-		group = requestCreate(group, "/ProjectGroup");
+		ProjectGroup group01 = (ProjectGroup) SerializationUtils.clone(this.group);
+		group01.setName(methodName + "-group01");
+		group01 = groupClient.requestCreate(group01);
 		
-		ProjectGroup group2 = new ProjectGroup();
-		group2.setName("hasGroupTest-02");
-		group2.setDescription("test description");
-		group2 = requestCreate(group2, "/ProjectGroup");
+		ProjectGroup group02 = (ProjectGroup) SerializationUtils.clone(this.group);
+		group02.setName(methodName + "-group02");
+		group02 = groupClient.requestCreate(group02);
 		
-//		case 1
-//		TODO: refactoring
-//		first add has group
-		MvcResult response;
-		response = this.mockMvc.perform(
-				post("/Project/" + project.getIdx() + "/hasGroup")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON)
-				.param("grp_idx", group.getIdx().toString())
-			)
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
+		String uri = String.format("%s/%s/hasGroup", projectClient.getDefaultURI(), project.getIdx());
+		ArrayList<ProjectGroup> groups01;
+		ArrayList<ProjectGroup> groups02;
+		HashMap<String, String> params = new HashMap<String, String>();
+		Class<? extends ArrayList> clazz = new ArrayList<ProjectGroup>().getClass();
+		
+		//has group01
+		params.put("grp_idx", group01.getIdx().toString());
+		groups01 = projectClient.requestPost(clazz, uri, params);
+		assertThat(groups01.size(), is(1));
 
-//		second add has group
-		response = this.mockMvc.perform(
-				post("/Project/" + project.getIdx() + "/hasGroup")
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON)
-				.param("grp_idx", group2.getIdx().toString())
-			)
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
-		
-		ArrayList<ProjectGroup> groups = new ObjectMapper().readValue(response.getResponse().getContentAsString()
-				, new TypeReference<ArrayList<ProjectGroup>>(){});
-		assertThat(groups.size(),is(2));
-		assertThat(mapper.writeValueAsString(group), is(mapper.writeValueAsString(groups.get(0))));
-		assertThat(mapper.writeValueAsString(group2), is(mapper.writeValueAsString(groups.get(1))));
-		
-		
-//		get has group
-		ArrayList<ProjectGroup> groups2 = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(mapper.writeValueAsString(groups2), is(mapper.writeValueAsString(groups)));
+		//has group02
+		params.clear();
+		params.put("grp_idx", group02.getIdx().toString());
+		groups01 = projectClient.requestPost(clazz, uri, params);
+		assertThat(groups01.size(), is(2));
 
-//		first del hasGroup
-		params.clear();
-		params.put("grp_idx", group.getIdx().toString());
-		requestDelete(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup", params);
-		ArrayList<ProjectGroup> groups3 = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(groups3.size(), is(1));
+		//get hasProjectGroup
+		groups02 = projectClient.requestGet(clazz, uri);
 		
-//		second del hasGroup
-		params.clear();
-		params.put("grp_idx", group2.getIdx().toString());
-		requestDelete(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup", params);
-		ArrayList<ProjectGroup> groups4 = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(groups4.size(), is(0));
+		//compare group01 and group02
+		ObjectMapper mapper = new ObjectMapper();
+		assertThat(mapper.writeValueAsString(groups02), is(mapper.writeValueAsString(groups01)));
 		
-//		case 2
-//		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
-//		groups.add(group);
-//		groups.add(group2);
-//		project.setGroups(groups);
+//		first del hasProjectGroup
+		params.clear();
+		params.put("grp_idx", group01.getIdx().toString());
+		projectClient.requestDelete(clazz, uri, params);
+
+		groups01 = projectClient.requestGet(clazz, uri);
+		assertThat(groups01.size(), is(1));
+		
+//		second del hasProjectGroup
+		params.clear();
+		params.put("grp_idx", group02.getIdx().toString());
+		groups01 = projectClient.requestDelete(clazz, uri, params);
+
+		projectClient.requestGet(clazz, uri, status().isNoContent());
 	}
 	
 	@Test
 	public void testHasProjectGroupReset() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+//		init ProjectGroup
+		ProjectGroup group01 = (ProjectGroup) SerializationUtils.clone(this.group);
+		group01.setName(methodName + "-group01");
+		group01 = groupClient.requestCreate(group01);
 
-//		init Group
-		ProjectGroup group1 = new ProjectGroup();
-		group1.setName("testHasProjectGroupReset-group01");
-		group1.setDescription("test description");
-		group1 = requestCreate(group1, "/ProjectGroup");
+		ProjectGroup group02 = (ProjectGroup) SerializationUtils.clone(this.group);
+		group02.setName(methodName + "-group02");
+		group02 = groupClient.requestCreate(group02);
 		
-		ProjectGroup group2 = new ProjectGroup();
-		group2.setName("testHasProjectGroupReset-group02");
-		group2.setDescription("test description");
-		group2 = requestCreate(group2, "/ProjectGroup");
-
 //		init Project
-		Project project = new Project();
-		project.setName("testHasProjectGroupReset-project");
+		Project project = (Project) SerializationUtils.clone(this.project);
+		project.setName(methodName + "-group");
 		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
-		groups.add(group1);
-		groups.add(group2);
+		groups.add(group01);
+		groups.add(group02);
 		project.setGroups(groups);
 		
-//		create new project
-		project = requestCreate(project, "/Project");
+//		create new Group
+		project = projectClient.requestCreate(project);
 		
-//		get hasGroup
-		groups = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(project.getGroups().size(), is(2));
+		String uri = String.format("%s/%s/hasGroup", projectClient.getDefaultURI(), project.getIdx());
+		HashMap<String, String> params = new HashMap<String, String>();
+		Class<? extends ArrayList> clazz = new ArrayList<ProjectGroup>().getClass();
 
+//		get hasGroup
+		groups = projectClient.requestGet(clazz, uri);
+		assertThat(groups.size(), is(2));
+		
 //		remove one & update
 		groups.remove(0);
 		project.setGroups(groups);
-		project = requestUpdate(project, "/Project/" + project.getIdx());
-
-		groups = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(project.getGroups().size(), is(1));
+		projectClient.requestUpdate(project, project.getIdx().toString());
+		groups = projectClient.requestGet(clazz, uri);
+		assertThat(groups.size(), is(1));
+		
 		
 //		add one & update
-		groups.add(group1);
+		groups.add(group01);
 		project.setGroups(groups);
-		project = requestUpdate(project, "/Project/" + project.getIdx());
-		
-		groups = requestGetList(ProjectGroup.class, "/Project/" + project.getIdx() + "/hasGroup");
-		assertThat(project.getGroups().size(), is(2));
-	}
-	
-	
-	private <T> T requestCreate(T obj, String uri) throws Exception {
-		String requestMessage = new ObjectMapper().writeValueAsString(obj);
-		
-		MvcResult response = this.mockMvc.perform(post(uri)
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.idx", greaterThan(0)))
-			.andDo(print())
-			.andReturn();
-		
-		String responseBody = response.getResponse().getContentAsString();
-		obj = (T) new ObjectMapper().readValue(responseBody, obj.getClass());
-		
-		return obj;
-	}
+		projectClient.requestUpdate(project, project.getIdx().toString());
+		groups = projectClient.requestGet(clazz, uri);
+		assertThat(groups.size(), is(2));
 
-	private <T> T requestUpdate(T obj, String uri) throws Exception {
-		String requestMessage = new ObjectMapper().writeValueAsString(obj);
-		
-		MvcResult response = this.mockMvc.perform(put(uri)
-				.content(requestMessage)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isCreated())
-			.andDo(print())
-			.andReturn();
-		
-		String responseBody = response.getResponse().getContentAsString();
-		obj = (T) new ObjectMapper().readValue(responseBody, obj.getClass());
-		
-		return obj;
-	}
-
-	private <T> void requestDelete(Class<T> cls, String uri) throws Exception {
-		requestDelete(cls, uri, new HashMap<String, String>());
-	}
-	
-	private <T> void requestDelete(Class<T> cls, String uri, HashMap<String, String> params) throws Exception {
-
-		MockHttpServletRequestBuilder requestBuilder = delete(uri)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON);
-		
-		
-		for (Entry<String, String> element : params.entrySet()){
-			requestBuilder.param(element.getKey(), element.getValue());
-		}
-		
-		this.mockMvc.perform(requestBuilder)
-			.andExpect(status().isAccepted())
-			.andDo(print())
-			.andReturn();
-	}
-	
-	private <T> T requestGet(Class<T> cls, String uri) throws Exception {
-		
-		MvcResult response = this.mockMvc.perform(get(uri)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print())
-			.andReturn();
-		
-		String responseBody = response.getResponse().getContentAsString();
-		
-		return new ObjectMapper().readValue(responseBody, cls);
-	}
-	
-	private <T> ArrayList<T> requestGetList(Class<T> cls, String uri) throws Exception {
-		
-		MvcResult response = this.mockMvc.perform(get(uri)
-				.contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is2xxSuccessful())
-			.andDo(print())
-			.andReturn();
-		
-		String responseBody = response.getResponse().getContentAsString();
-		
-		if(response.getResponse().getStatus() == HttpStatus.NO_CONTENT.value()) {
-			return new ArrayList<T>();
-		} else {
-			return new ObjectMapper().readValue(responseBody,  mapper.getTypeFactory().constructCollectionType(ArrayList.class, cls));
-		}
+//		remove all
+		groups.clear();
+		project.setGroups(groups);
+		projectClient.requestUpdate(project, project.getIdx().toString());
+		groups = projectClient.requestGet(clazz, uri, status().isNoContent());
 	}
 }

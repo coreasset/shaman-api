@@ -191,7 +191,7 @@ public class ProjectGroupApiTest {
 		group.setDescription(this.getClass() + "-list test description");
 
 //		20개 insert
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 40; i++) {
 			group.setName(this.getClass() + "-listTest-" + i);
 			client.requestCreate(group);
 		}

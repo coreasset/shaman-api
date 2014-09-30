@@ -99,7 +99,6 @@ public class BuildProfileMapperTest {
 		idx= profileMapper.isExist(profile.getName());
 		assertThat("is 1", idx, greaterThan(0));
 		
-		
 		// idx match
 		idx = profileMapper.isExist(profile.getIdx());
 		assertThat("is 1", idx,  greaterThan(0));
@@ -159,14 +158,5 @@ public class BuildProfileMapperTest {
 		count = profileMapper.count(keyword);
 		profiles = profileMapper.findList(0, 100, keyword);
 		assertEquals("second findlist count", profiles.size(), count);
-	}
-	
-	/**
-	 * 실제 DB에 있는 값으로 임시 테스트
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testTmp() throws Exception {
 	}
 }

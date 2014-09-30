@@ -69,8 +69,9 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void createOk() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setName(this.getClass() + "createOk-test");
+		profile.setName(methodName + "createOk-test");
 		
 		client.requestCreate(profile);
 	}
@@ -82,8 +83,9 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void createFail() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setName(this.getClass() + "-createFail");
+		profile.setName(methodName + "-createFail");
 		
 //		first request
 		client.requestCreate(profile);
@@ -99,14 +101,15 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void updateOk() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setName(this.getClass() + "-updateTest");
+		profile.setName(methodName + "-updateTest");
 		
 //		Create
 		profile = client.requestCreate(profile);
 		
 //		Update
-		profile.setName(this.getClass() + "-updateTest2");
+		profile.setName(methodName + "-updateTest2");
 		client.requestUpdate(profile, profile.getIdx().toString());
 	}
 	
@@ -116,8 +119,9 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void updateFail() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setName(this.getClass() + "-updateFail");
+		profile.setName(methodName + "-updateFail");
 		
 		client.requestUpdate(profile, "0", status().isNoContent());
 	}
@@ -129,8 +133,9 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void deleteOk() throws Exception {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setName(this.getClass() + "-deleteTest");
+		profile.setName(methodName + "-deleteTest");
 
 		profile = client.requestCreate(profile);
 		
@@ -162,13 +167,15 @@ public class BuildProfileApiTest {
 	 */
 	@Test
 	public void findList() throws Exception{
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		
 //		init data
 		BuildProfile profile = (BuildProfile) SerializationUtils.clone(this.profile);
-		profile.setDescription(this.getClass() + "-list test description");
+		profile.setDescription(methodName + "-list test description");
 
 //		20개 insert
-		for (int i = 0; i < 20; i++) {
-			profile.setName(this.getClass() + "-listTest-" + i);
+		for (int i = 0; i < 40; i++) {
+			profile.setName(methodName + "-listTest-" + i);
 			client.requestCreate(profile);
 		}
 
@@ -184,9 +191,5 @@ public class BuildProfileApiTest {
 		list = client.requestGetList(params);
 		
 		assertThat("list count", list.getList().size(), is(20));
-	}
-	
-	@Test
-	public void testTmp() throws Exception {
 	}
 }

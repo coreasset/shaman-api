@@ -190,9 +190,4 @@ public class ProjectGroupMapperTest {
 		assertThat(findGroup.getProjects().size(), is(2));
 		
 	}
-	
-	@Test
-	public void testTmp() throws Exception{
-		
-	}
 }

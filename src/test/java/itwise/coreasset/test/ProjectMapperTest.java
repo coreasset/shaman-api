@@ -5,8 +5,10 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import itwise.coreasset.shaman.api.config.AppContextConfig;
 import itwise.coreasset.shaman.api.config.InitEnvironmentConfig;
+import itwise.coreasset.shaman.api.mapper.BuildProfileMapper;
 import itwise.coreasset.shaman.api.mapper.ProjectGroupMapper;
 import itwise.coreasset.shaman.api.mapper.ProjectMapper;
+import itwise.coreasset.shaman.api.model.BuildProfile;
 import itwise.coreasset.shaman.api.model.Project;
 import itwise.coreasset.shaman.api.model.ProjectGroup;
 
@@ -34,8 +36,12 @@ public class ProjectMapperTest {
 	@Autowired
 	private ProjectGroupMapper groupMapper;
 	
+	@Autowired
+	private BuildProfileMapper buildProfileMapper;
+	
 	@Before
 	public void setUp(){
+		assertThat(0,is(0));
 	}
 	
 	/**
@@ -197,29 +203,76 @@ public class ProjectMapperTest {
 		hasProject = projectMapper.findOne(project.getIdx());
 		assertThat(hasProject.getGroups().size(), is(0));
 		
-
-//		ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
-//		groups.add(group01);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(1));
-//		projectMapper.addHasGroup(project);
-//		groups.add(group02);
-//		project.setGroups(groups);
-//		assertThat(project.getGroups().size(), is(2));
-		
 	}
 
+	
 	/**
-	 * 실제 DB에 있는 값으로 임시 테스트
+	 * has BuildProfile CRUD
 	 * @throws Exception
 	 */
 	@Test
-	public void testTmp() throws Exception {
-//		Project project = projectMapper.findOne(4);
-//		assertThat(project.getGroups().size(), greaterThan(0));
-//		ProjectGroup group1 = project.getGroups().get(0);
-//		ProjectGroup group2 = project.getGroups().get(1);
-//		System.out.println(group1);
-//		System.out.println(group2);
+	public void testHasBuildProfile() throws Exception {
+		
+//		--------------------------------------
+//		when create
+//		--------------------------------------
+		//insert BuildProfile
+		BuildProfile buildProfile = new BuildProfile();
+		buildProfile.setName("hasTestHasBuildProfile01");
+		buildProfile.setDescription("testHasBuildProfile02 desc");
+		buildProfile.setFlavor("ant");
+		buildProfile.setGoal("install");
+		buildProfileMapper.insert(buildProfile);
+		
+		//set BuildProfile to Project & insert Project
+		Project project = new Project();
+		project.setName("testHasBuildProfile");
+		project.setBuildProfile(buildProfile);
+		projectMapper.insert(project);
+		
+		// find & check
+		Project project02 = projectMapper.findOne(project.getIdx());
+		assertThat(project02.getBuildProfile().getIdx(), is(project.getBuildProfile().getIdx()));
+		
+//		--------------------------------------
+//		when update association
+//		--------------------------------------
+		BuildProfile buildProfile02 = new BuildProfile();
+		buildProfile02.setName("hasTestHasBuildProfile02");
+		buildProfile02.setDescription("testHasBuildProfile02 desc");
+		buildProfile02.setFlavor("ant");
+		buildProfile02.setGoal("install");
+		buildProfileMapper.insert(buildProfile02);
+		
+//		change buildProfile -> buildProfile02
+		project.setBuildProfile(buildProfile02);
+		projectMapper.update(project.getIdx(), project);
+		
+		project02 = projectMapper.findOne(project.getIdx());
+		assertThat(project02.getBuildProfile().getIdx(), is(project.getBuildProfile().getIdx()));
+
+//		--------------------------------------
+//		when delete association
+//		--------------------------------------
+		project.setBuildProfile(null);
+		projectMapper.update(project.getIdx(), project);
+		
+		project02 = projectMapper.findOne(project.getIdx());
+		assertThat(project02.getBuildProfile(), is(nullValue()));
+		
+//		--------------------------------------
+//		when delete BuildProfile
+//		--------------------------------------
+		project.setBuildProfile(buildProfile02);
+		projectMapper.update(project.getIdx(), project);
+		
+		project02 = projectMapper.findOne(project.getIdx());
+		assertThat(project02.getBuildProfile().getIdx(), is(project.getBuildProfile().getIdx()));
+		
+		buildProfileMapper.delete(buildProfile02.getIdx());
+		
+//		if null check
+		project02 = projectMapper.findOne(project.getIdx());
+		assertThat(project02.getBuildProfile(), is(nullValue()));
 	}
 }
