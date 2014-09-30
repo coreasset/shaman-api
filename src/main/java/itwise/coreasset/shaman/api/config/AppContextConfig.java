@@ -18,7 +18,7 @@ public class AppContextConfig {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
 	public AppContextConfig() {
-		logger.info("initialize AppContextConfig");
+		logger.info("===> initialize AppContextConfig");
 	}
 	
 }

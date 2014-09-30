@@ -1,12 +1,12 @@
 package itwise.coreasset.shaman.api.config;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -23,7 +23,7 @@ public class DataSourceConfig implements InitializingBean {
 	
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
-	@Autowired
+	@Resource
 	private Environment env;
 
 	@Bean
