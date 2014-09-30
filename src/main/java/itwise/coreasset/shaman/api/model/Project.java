@@ -18,7 +18,6 @@ public class Project implements Serializable {
 	private static final long serialVersionUID = 593181629181614333L;
 
 	private Integer idx = 0;
-	private Integer buildProfileIdx;
 	private String name;
 	private String description;
 	private String groupId;
@@ -28,6 +27,7 @@ public class Project implements Serializable {
 	private Date regDate;
 	
 	private ArrayList<ProjectGroup> groups = new ArrayList<ProjectGroup>();
+	private BuildProfile buildProfile;
 	
 	public Project() {
 	}
@@ -108,5 +108,19 @@ public class Project implements Serializable {
 	 */
 	public void setGroups(ArrayList<ProjectGroup> groups) {
 		this.groups = groups;
+	}
+
+	/**
+	 * @return the buildProfile
+	 */
+	public BuildProfile getBuildProfile() {
+		return buildProfile;
+	}
+
+	/**
+	 * @param buildProfile the buildProfile to set
+	 */
+	public void setBuildProfile(BuildProfile buildProfile) {
+		this.buildProfile = buildProfile;
 	}
 }
