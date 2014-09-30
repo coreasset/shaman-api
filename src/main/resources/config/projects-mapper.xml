@@ -11,9 +11,9 @@
 
 	<insert id="insert" parameterType="Project" useGeneratedKeys="true" keyProperty="idx">
 		INSERT INTO 
-			projects (name, description, reg_date)
+			projects (name, description, reg_date, build_profile_idx)
 		VALUES
-			(#{name}, #{description}, now())
+			(#{name}, #{description}, now(), #{buildProfile.idx})
 	</insert>
 	
 
@@ -28,6 +28,7 @@
 		<set>
 			<if test="project.name != null">name = #{project.name},</if>
 			<if test="project.description != null">description = #{project.description},</if>
+			build_profile_idx = #{project.buildProfile.idx}
 		</set>
 		WHERE 
 			idx = #{idx}
@@ -64,14 +65,21 @@
 		<result property="artifactId" column="artifact_id"/>
 		<result property="packageType" column="package_type"/>
 		<result property="description" column="description"/>
-		<result property="buildProfileIdx" column="build_profile_idx"/>
 		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
 	</resultMap>
 
+<!-- 
 	<resultMap id="ProjectHasGroupMap" extends="ProjectMap" type="Project">
 		<collection property="groups" column="idx" javaType="ArrayList" ofType="ProjectGroup" select="hasGroups" />
 	</resultMap>
-	
+-->
+
+	<resultMap id="ProjectDetailMap" extends="ProjectMap" type="Project">
+		<association property="buildProfile" column="idx" 
+			javaType="itwise.coreasset.shaman.api.model.BuildProfile" select="hasBuildProfile" />
+		<collection property="groups" column="idx" javaType="ArrayList" ofType="ProjectGroup" select="hasGroups" />
+	</resultMap>
+		
 	<select id="selectChangeLogs" resultType="Project">
 		SELECT 
 			idx, change_log, reg_date 
@@ -80,7 +88,15 @@
 			prj_idx = #{idx}
 	</select>
 
-
+	<select id="hasBuildProfile" resultMap="itwise.coreasset.shaman.api.mapper.BuildProfileMapper.BuildProfileMap">
+		SELECT 
+			a.idx, a.name, a.description, a.reg_date, a.flavor, a.goal, a.param 
+		FROM build_profiles as a
+		inner join projects as b on a.idx = b.build_profile_idx
+		where
+			b.idx = #{idx}
+	</select>
+	
 	<insert id="addHasGroup" parameterType="map">
 		insert into groups_has_projects
 		(prj_idx, grp_idx)
@@ -109,7 +125,7 @@
 			b.prj_idx = #{idx}
 	</select>
 	
-	<select id="findOne" resultMap="ProjectHasGroupMap">
+	<select id="findOne" resultMap="ProjectDetailMap">
 		SELECT 
 			a.idx, name, a.reg_date, a.description, a.group_id, a.artifact_id, a.package_type, a.build_profile_idx 
 		FROM projects as a

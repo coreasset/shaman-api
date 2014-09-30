@@ -65,19 +65,28 @@
 	<resultMap id="BuildProfileMap" type="BuildProfile">
 		<id property="idx" column="idx" />
 		<result property="name" column="name"/>
-		<result property="groupId" column="group_id"/>
-		<result property="artifactId" column="artifact_id"/>
-		<result property="packageType" column="package_type"/>
 		<result property="description" column="description"/>
-		<result property="buildProfileIdx" column="build_profile_idx"/>
 		<result property="regDate" column="reg_date" javaType="java.sql.Timestamp"/>
+		<result property="flavor" column="flavor"/>
+		<result property="goal" column="goal"/>
+		<result property="param" column="param"/>
 	</resultMap>
 
+<!-- 
 	<resultMap id="BuildProfileHasGroupMap" extends="BuildProfileMap" type="BuildProfile">
 		<collection property="groups" column="idx" javaType="ArrayList" ofType="BuildProfileGroup" select="hasGroups" />
 	</resultMap>
 	
-
+	<select id="hasBuildProfile" resultMap="itwise.coreasset.shaman.api.mapper.BuildProfileMapper.BuildProfileMap">
+		SELECT 
+			idx, name, description, reg_date 
+		FROM projects as a
+		inner join groups_has_projects as b on a.idx = b.prj_idx
+		where
+			b.grp_idx = #{idx}
+	</select>
+-->
+	
 	<select id="findOne" resultMap="BuildProfileMap">
 		SELECT 
 			a.idx, name, a.reg_date, a.description, a.flavor, a.goal, a.param 
